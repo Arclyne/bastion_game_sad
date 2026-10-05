@@ -6,7 +6,7 @@
 \usepackage{lmodern}
 \usepackage[margin=2.2cm,top=2.4cm,bottom=2.2cm,headheight=14pt]{geometry}
 \usepackage[dvipsnames,table]{xcolor}
-\usepackage{array,tabularx,booktabs,multirow}
+\usepackage{array,tabularx,booktabs,multirow,xltabular}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
@@ -66,6 +66,7 @@
 \newcommand{\hd}[1]{\textbf{\small #1}}
 \newcommand{\headrow}{\rowcolor{SADHead}}
 \AtBeginEnvironment{tabularx}{\small}
+\AtBeginEnvironment{xltabular}{\small}
 
 % Callout box
 \newtcolorbox{callout}[1][]{enhanced,breakable,colback=SADNote,colframe=SADNote,boxrule=0pt,
@@ -97,8 +98,8 @@
 
 \vspace{1.2em}
 \noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
-  Proyecto & Bastión · juego de mesa multijugador por turnos inspirado en Quoridor («Laberinto de Muros»)\\\hline
-  Equipo e integrantes & Equipo Bastión · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
+  Proyecto & Bastión \\\hline
+  Equipo e integrantes & Equipo 4 · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
   Versión del documento & v0.1\\\hline
   Entrega & Primera entrega\\\hline
   Fecha & 05/10/2026\\\hline
@@ -142,15 +143,15 @@
 
 \subsection{Resumen de la arquitectura}
 \hint{Máximo una página: problema, drivers principales, estructura general, decisiones esenciales y riesgos abiertos. Conviene escribirlo al final de cada entrega.}
-\textbf{Problema.} Bastión es un juego de mesa por turnos inspirado en Quoridor, con partidas en línea de dos o cuatro jugadores, partidas contra la IA, ranking por elo, economía cosmética con monedas y cajas, chat, espectadores y moderación (CU-01 a CU-49). Lo construye un equipo de dos personas, una en macOS arm64 y otra en Windows, con C\# sobre .NET y WCF, sin tecnologías web.
+\textbf{Problema.} Bastión es un juego de mesa por turnos inspirado en Quoridor, con partidas en línea de dos o cuatro jugadores, partidas contra la IA, ranking por elo, economía cosmética con monedas y cajas, chat, espectadores y moderación (CU-01 a CU-49). Lo construye un equipo de dos personas, una en macOS arm64 y otra en Windows, con un stack propio aprobado por el profesor: C\# sobre .NET 10, MonoGame DesktopGL, CoreWCF y SQL Server, sin tecnologías web.
 
-\textbf{Drivers principales.} Que un cliente modificado no pueda hacer trampa (QAS-01) y que las contraseñas resistan intentos en serie (QAS-02); que una jugada llegue al rival en menos de 500 ms (QAS-03); que una desconexión o una falla de la base no deje partidas ni compras a medias (QAS-05 a QAS-07); y que todo funcione igual en los dos sistemas (QAS-08). De ahí salen siete ASR: servidor como única autoridad (ASR-01), notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), seguridad sin cifrado de transporte (ASR-04), atomicidad (ASR-05), reglas aisladas y probables (ASR-06) e internacionalización (ASR-07).
+\textbf{Drivers principales.} Que un cliente modificado no pueda hacer trampa (QAS-01) y que las contraseñas resistan intentos en serie (QAS-02); que una jugada llegue al rival en menos de 500 ms (QAS-03); que una desconexión o una falla de la base no deje partidas ni compras a medias (QAS-05 a QAS-07); y que todo funcione igual en los dos sistemas (QAS-08). De ahí salen siete ASR: que nada dependa de que el cliente sea honesto (ASR-01), que los cambios lleguen a tiempo a cada cliente (ASR-02), multiplataforma (ASR-03), cuentas y sesiones que resistan la adivinación y el robo de datos (ASR-04), ninguna operación a medias ni repetida (ASR-05), reglas que se prueban sin infraestructura (ASR-06) e internacionalización (ASR-07). El servidor como única autoridad no es un driver: es la respuesta que se elige en ADR-001 tras compararla con otras.
 
 \textbf{Estructura general.} Cliente-servidor en capas (ADR-001): el cliente MonoGame (C-01) solo conoce los contratos (C-02); el servidor (C-03) expone CoreWCF, sus servicios (C-04) validan con un dominio sin dependencias (C-05) y guardan con EF Core (C-06) en SQL Server (C-07). Las vistas V-01 y V-02 lo muestran.
 
 \textbf{Decisiones esenciales.} CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); MonoGame DesktopGL (ADR-003); \texttt{SecurityMode.None} con la seguridad en el servidor (ADR-004); EF Core y SQL Server 2022 con el esquema en scripts SQL (ADR-005); resultados codificados traducidos en el cliente (ADR-006).
 
-\textbf{Riesgos abiertos.} La aceptación de CoreWCF y EF Core por el profesor (R-01), las credenciales en claro en la red (R-02), la presentación del tablero (R-03), SQL Server bajo Rosetta (R-04), el servidor como punto único de falla (R-05) y la latencia aún sin medir (R-06).
+\textbf{Riesgos abiertos.} Las credenciales en claro en la red (R-01), la presentación del tablero (R-02), SQL Server bajo Rosetta (R-03), el servidor como punto único de falla (R-04) y la latencia aún sin medir (R-05).
 
 \subsection{Glosario}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
@@ -159,7 +160,7 @@
   Servidor de partidas & Proceso .NET que expone los servicios CoreWCF, valida toda regla del juego y de la cuenta, y es el único que accede a la base de datos.\\\hline
   Contrato & Interfaz de servicio o de callback y sus tipos de datos (\texttt{Bastion.Contracts}), compartidos por cliente y servidor.\\\hline
   Callback & Llamada que el servidor hace al cliente por el canal dúplex para avisarle de un cambio (jugada del rival, mensaje de chat, fin de partida) sin que el cliente lo pida.\\\hline
-  Dúplex net.tcp & Canal TCP binario de WCF que permite llamadas en ambos sentidos sobre la misma conexión.\\\hline
+  Dúplex net.tcp & Canal TCP binario de CoreWCF que permite llamadas en ambos sentidos sobre la misma conexión.\\\hline
   Token de sesión & Valor aleatorio que el servidor entrega al iniciar sesión y que acompaña cada llamada posterior. Solo se guarda su resumen SHA-256; vence a las 24 horas (CU-01 RN-07).\\\hline
   Partida & Juego entre dos o cuatro participantes, o contra la IA, en un \textit{modo}. Termina por llegada a meta, reloj, rendición, tablas o abandono (CU-25 RN-01).\\\hline
   Participación & Registro de un jugador en una partida, con su elo de entrada y su resultado. Un jugador tiene como mucho una sin terminar (D-01, D-11).\\\hline
@@ -192,90 +193,106 @@
 
 \subsection{Contexto y frontera}
 \hint{En un párrafo: qué está dentro del sistema, qué queda fuera y con qué sistemas externos se comunica. El diagrama va en la sección 6 como V-01; aquí sólo refiéranlo.}
-Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada del jugador, idiomas en-US y es-MX), el \textbf{servidor de partidas} (cuentas, sesiones, emparejamiento, salas, partidas en curso y contra la IA, chat, espectadores, ranking, tienda y cajas, moderación y bitácoras) y la \textbf{base de datos} SQL Server, a la que solo llega el servidor. Los actores humanos son el Jugador, el Invitado, el espectador Anónimo, el Moderador y el Administrador (lista de casos de uso). Fuera del sistema quedan el \textbf{servicio de correo}, que el servidor usa para verificar cuentas, recuperar contraseñas y confirmar cambios de correo (CU-02, CU-03, CU-04, CU-09, CU-11), y el \textbf{proveedor del segundo factor} (CU-01 RN-08); ambos se usan detrás de una interfaz. No hay pagos con dinero real (CU-38 RN-01), ni navegador, ni servicios web. El diagrama de contexto es la vista V-01 (sección 6).
+Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada del jugador, idiomas en-US y es-MX), el \textbf{servidor de partidas} (cuentas, sesiones, emparejamiento, salas, partidas en curso y contra la IA, chat, espectadores, ranking, tienda y cajas, moderación y bitácoras) y la \textbf{base de datos} SQL Server. Los actores humanos son el Jugador, el Invitado, el espectador Anónimo, el Moderador y el Administrador (lista de casos de uso). Fuera del sistema quedan el \textbf{servicio de correo}, que el servidor usa para verificar cuentas, recuperar contraseñas y confirmar cambios de correo (CU-02, CU-03, CU-04, CU-09, CU-11), y el \textbf{proveedor del segundo factor}, que entrega o valida el código de la autenticación de doble factor al iniciar sesión, ya sea por correo electrónico o con una aplicación autenticadora TOTP como Google Authenticator (CU-01 FA-11, RN-08); los dos pueden fallar, tardar o cambiar de proveedor. No hay pagos con dinero real (CU-38 RN-01), ni navegador, ni servicios web. El diagrama de contexto es la vista V-01 (sección 6).
 
 \subsection{Interesados y preocupaciones}
 \hint{Incluyan sólo a quienes tienen una preocupación que puede cambiar la arquitectura. Una preocupación es lo que le importa a alguien, no una función del sistema.}
-\noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
+\begin{xltabular}{\linewidth}{|>{\raggedright\arraybackslash}p{4.2cm}|Y|}\hline
   \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
-  Jugador (cuenta registrada) & Que nadie pueda hacer trampa con un cliente modificado; que una jugada se vea en el tablero del rival casi al instante; no perder una partida por un corte breve de red; no perder monedas ni objetos por una falla a mitad de una compra.\\\hline
-  Invitado & Poder jugar sin registrarse y conservar su progreso si después vincula la cuenta (CU-06, CU-07).\\\hline
-  Espectador (con o sin cuenta) & Ver partidas sin poder soplar jugadas ni molestar a los participantes (CU-34).\\\hline
-  Moderador y administrador & Que las sanciones surtan efecto de inmediato y que las bitácoras no puedan alterarse ni borrarse (CU-44, CU-48).\\\hline
-  Equipo de desarrollo (dos integrantes, uno en macOS arm64 y otro en Windows) & Compilar, ejecutar y probar todo en ambos sistemas; trabajar en paralelo sin pisarse; poder probar las reglas del servidor sin base de datos ni red.\\\hline
-  Profesor de la experiencia educativa & Que se respeten las tecnologías permitidas por el curso (sin stack web, WebSockets, SignalR, gRPC ni REST) y que cada decisión esté justificada y trazada hasta su evidencia.\\\hline
-\end{tabularx}
+  \endfirsthead
+  \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
+  \endhead
+  STK-01 · Jugador (8 años o más) & \textbf{Interés:} Reglas fáciles de aprender, controles accesibles, partidas fluidas y profundidad estratégica suficiente.\newline CRN-01: Entender al momento por qué una jugada no es válida, sin leer un párrafo.\newline CRN-02: Que el juego responda en menos de un segundo al colocar una barrera.\newline CRN-03: Que el juego siga interesando sin que aprender cueste más de unos minutos.\newline CRN-06: Saber qué pasa si se corta la conexión a mitad de partida: volver, perder o dejar esperando al rival.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\\\hline
+  STK-02 · Padre o tutor & \textbf{Interés:} Contenido seguro, protección del menor y control sobre lo que hace su hijo.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-05: Entregar solo los datos imprescindibles del menor y saber qué se guarda y para qué.\\\hline
+  STK-03 · Profesor o cliente & \textbf{Interés:} Cumplimiento de objetivos y entrega puntual.\newline CRN-07: Saber si lo comprometido cabe en las 14 semanas y qué se recorta primero.\newline CRN-08: Ver cada semana algo que funcione y se pueda probar.\\\hline
+  STK-04 · Director del proyecto & \textbf{Interés:} Cumplimiento de alcance, presupuesto y calendario.\newline CRN-07: Saber si lo comprometido cabe en las 14 semanas y qué se recorta primero.\newline CRN-14: Avanzar sin que la decisión sobre IA, conexión LAN o nombre del juego obligue a rehacer trabajo.\\\hline
+  STK-05 · Arquitecto de software & \textbf{Interés:} Estructura coherente, modificabilidad y decisiones justificadas.\newline CRN-09: Poder justificar cada decisión estructural y señalar dónde y por qué se tomó.\newline CRN-10: Decidir quién manda sobre el estado de la partida, el cliente o el servidor.\newline CRN-11: Definir el protocolo sobre TCP sin WebSockets: delimitación de mensajes, serialización y versiones distintas de cliente y servidor.\newline CRN-12: Que cliente y servidor apliquen exactamente las mismas reglas.\newline CRN-20: Añadir LAN sin rehacer el núcleo, con el extremo de red configurable desde fuera.\newline CRN-26: Dejar el segundo factor detrás de una interfaz para cambiar de mecanismo sin tocar el inicio de sesión.\\\hline
+  STK-06 · Diseñador del videojuego & \textbf{Interés:} Mecánicas originales y equilibradas.\newline CRN-03: Que el juego siga interesando sin que aprender cueste más de unos minutos.\newline CRN-13: Cambiar el tamaño del tablero y el número de barreras sin recompilar.\\\hline
+  STK-07 · Programadores & \textbf{Interés:} Requisitos claros, recursos y tiempo suficientes.\newline CRN-11: Definir el protocolo sobre TCP sin WebSockets: delimitación de mensajes, serialización y versiones distintas de cliente y servidor.\newline CRN-14: Avanzar sin que la decisión sobre IA, conexión LAN o nombre del juego obligue a rehacer trabajo.\\\hline
+  STK-08 · Equipo de arte, interfaz y sonido & \textbf{Interés:} Identidad visual y sonora propia e interfaz fácil de usar.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\\\hline
+  STK-09 · Diseñador de experiencia de usuario & \textbf{Interés:} Facilidad de aprendizaje y buena experiencia de uso.\newline CRN-01: Entender al momento por qué una jugada no es válida, sin leer un párrafo.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\\\hline
+  STK-10 · Equipo de pruebas (QA) & \textbf{Interés:} Estabilidad, ausencia de errores y equilibrio.\newline CRN-12: Que cliente y servidor apliquen exactamente las mismas reglas.\newline CRN-17: Ejecutar y repetir partidas completas sin pasar por la interfaz.\newline CRN-23: Que un cliente modificado no pueda hacer jugadas ilegales ni ver información oculta del rival.\\\hline
+  STK-11 · Equipo de localización & \textbf{Interés:} Traducciones claras y culturalmente apropiadas.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\newline CRN-16: Traducir textos, fechas, números y formatos sin tocar el código.\\\hline
+  STK-12 · Equipo de soporte y moderación (condicionado a Q-06) & \textbf{Interés:} Atender reportes y sancionar conductas inapropiadas.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\\\hline
+  STK-13 · Administrador de base de datos & \textbf{Interés:} Integridad, disponibilidad y recuperación de los datos.\newline CRN-19: Recuperar cuentas, progreso y partidas tras una caída, y definir qué información es aceptable perder.\newline CRN-21: Saber qué hace el sistema si el correo o un servicio externo deja de responder, sin quedarse colgado.\\\hline
+  STK-14 · Equipo de operaciones y despliegue & \textbf{Interés:} Que el sistema sea desplegable y esté disponible.\newline CRN-06: Saber qué pasa si se corta la conexión a mitad de partida: volver, perder o dejar esperando al rival.\newline CRN-20: Añadir LAN sin rehacer el núcleo, con el extremo de red configurable desde fuera.\newline CRN-21: Saber qué hace el sistema si el correo o un servicio externo deja de responder, sin quedarse colgado.\\\hline
+  STK-15 · Especialista en ciberseguridad & \textbf{Interés:} Seguridad de las cuentas y prevención de trampas.\newline CRN-10: Decidir quién manda sobre el estado de la partida, el cliente o el servidor.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\newline CRN-22: Que el tráfico TCP en claro permita leer credenciales y secuestrar sesiones.\newline CRN-23: Que un cliente modificado no pueda hacer jugadas ilegales ni ver información oculta del rival.\newline CRN-26: Dejar el segundo factor detrás de una interfaz para cambiar de mecanismo sin tocar el inicio de sesión.\\\hline
+  STK-16 · Auditor del proyecto & \textbf{Interés:} Trazabilidad y evidencia verificable cada semana.\newline CRN-08: Ver cada semana algo que funcione y se pueda probar.\newline CRN-09: Poder justificar cada decisión estructural y señalar dónde y por qué se tomó.\\\hline
+  STK-17 · Asesor legal y de propiedad intelectual & \textbf{Interés:} Uso legal de nombres, diseños, reglas y recursos.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-05: Entregar solo los datos imprescindibles del menor y saber qué se guarda y para qué.\newline CRN-24: Saber hasta dónde puede parecerse el juego a Quoridor sin infringir derechos de terceros.\\\hline
+  STK-18 · Gigamic y Mirko Marchesi & \textbf{Interés:} Protección de su marca y propiedad intelectual.\newline CRN-24: Saber hasta dónde puede parecerse el juego a Quoridor sin infringir derechos de terceros.\\\hline
+  STK-19 · Plataformas de distribución (restricción legal) & \textbf{Interés:} Cumplimiento de normas técnicas, legales y de contenido.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-25: Exigir clasificación por edad, empaquetado conforme y una política de chat que cumpla la regulación de cada región.\\\hline
+\end{xltabular}
 
 \subsection{Funciones clave}
 \hint{Usen los casos de uso o las historias de usuario que ya tienen, con sus identificadores. Señalen cuáles obligan a tomar decisiones arquitectónicas. Las demás pueden seguir la estructura general del sistema y documentarse sólo cuando sea necesario.}
 \noindent\begin{tabularx}{\linewidth}{|p{4.6cm}|p{3.2cm}|Y|}\hline
   \headrow\hd{Función (CU o HU)} & \hd{¿Arquitectónicamente significativa?} & \hd{Por qué}\\\hline
-  CU-01 · Iniciar sesión & Sí & Credenciales que viajan por un canal sin seguridad de transporte; mensaje y tiempo de respuesta iguales ante cualquier fallo (RN-01); bloqueo escalonado (RN-03); token de 24 horas que toda llamada posterior debe presentar (RN-07).\\\hline
+  CU-01 · Iniciar sesión & Sí & Las credenciales viajan por la red y alguien puede intentar adivinarlas o interceptarlas; la respuesta no debe revelar si la cuenta existe (RN-01) y los intentos fallidos repetidos deben frenarse (RN-03); la sesión dura 24 horas y una sanción debe cortarla (RN-07). Autenticación de doble factor (CON-08): si la cuenta la tiene activada, no se entra hasta comprobar un código de un solo uso con vigencia de cinco minutos y tres intentos (FA-11, RN-09). El código lo entrega un servicio externo, por correo electrónico o con una aplicación autenticadora TOTP como Google Authenticator, que puede fallar o tardar (EX-06), y el mecanismo aún no se elige y puede cambiar (RN-08, Q-03).\\\hline
   CU-02, CU-03, CU-04, CU-09 · Registro, recuperación, verificación y cambio de credenciales & Sí & Dependen de un servicio de correo externo que puede fallar o tardar; los tokens de verificación caducan y el correo vigente no cambia hasta confirmar el nuevo (D-20).\\\hline
-  CU-17 · Buscar partida clasificatoria & Sí & Estado compartido entre muchos clientes (la cola de emparejamiento); la partida y todas sus participaciones se crean en una sola transacción (RN-10); una sola participación sin terminar por jugador (RN-01, D-01).\\\hline
-  CU-20 · Mover el peón y CU-21 · Colocar un muro & Sí & El servidor es la única autoridad sobre el tablero (RN-01, RN-07); toda jugada lleva número de orden para no aplicarse dos veces (CU-20 RN-06); un muro nunca puede cerrar el camino de ningún jugador, lo que obliga a recorrer el tablero (CU-21 RN-05); el rival debe enterarse sin preguntar.\\\hline
-  CU-25 · Finalizar la partida y aplicar la progresión & Sí & Elo, estadísticas, monedas y cierre de participaciones en una sola transacción (RN-12); si falla, la partida queda pendiente de cierre y se reintenta (RN-13).\\\hline
-  CU-24 · Abandonar y CU-26 · Reconectar & Sí & Fallas de red: la desconexión no detiene el reloj, el rival puede reclamar a los 60 segundos (CU-24 RN-06) y el cliente se reconstruye solo con el estado completo del servidor (CU-26 RN-02, RN-06).\\\hline
-  CU-27 · Jugar contra la IA & Sí & La IA juega en el servidor con las mismas reglas que el jugador (RN-04): el motor de reglas debe poder usarse sin red ni base de datos.\\\hline
-  CU-28 · Enviar un mensaje de chat & Sí & Filtro de palabras obligatorio en el servidor; si no puede aplicarse, el mensaje se rechaza (RN-01, RN-11); ritmo de envío acotado (RN-04).\\\hline
-  CU-34 · Ver una partida como espectador & Sí & Difusión a hasta 200 espectadores por partida (RN-03) con ocho segundos de retraso (RN-01), sin persistencia (D-19).\\\hline
-  CU-38 · Comprar un objeto y CU-39 · Comprar y abrir una caja & Sí & Economía: el precio y el sorteo los decide el servidor (CU-38 RN-03, CU-39 RN-08); objeto, movimiento de monedas y saldo en una sola transacción (CU-38 RN-08); el cliente nunca reenvía una compra (RN-09).\\\hline
-  CU-44 · Aplicar una sanción y CU-48 · Consultar las bitácoras & Sí & La sanción de cuenta invalida los tokens vigentes (CU-01 RN-07); las bitácoras solo admiten inserción (CU-48 RN-02).\\\hline
-  CU-05 a CU-16, CU-18, CU-19, CU-22, CU-23, CU-29 a CU-33, CU-35 a CU-37, CU-40 a CU-43, CU-45 a CU-47, CU-49 & No & Siguen la estructura general: una pantalla del cliente, una operación del contrato y un servicio con su repositorio. Reutilizan las decisiones que imponen los casos anteriores (sesión, autoridad del servidor, transacciones).\\\hline
+  CU-17 · Buscar partida clasificatoria & Sí & Muchos jugadores esperan a la vez en la misma cola de emparejamiento; la partida no puede quedar creada a medias, con unos participantes sí y otros no (RN-10), y un jugador no puede estar en dos partidas sin terminar (RN-01, D-01).\\\hline
+  CU-20 · Mover el peón y CU-21 · Colocar un muro & Sí & Un jugador puede intentar una jugada ilegal o fuera de turno, incluso con un cliente modificado, y ninguna debe alterar la partida (RN-01, RN-07); una jugada repetida por la red no debe aplicarse dos veces (CU-20 RN-06); un muro nunca puede cerrar el camino de ningún jugador, lo que obliga a recorrer el tablero en cada colocación (CU-21 RN-05); el rival debe ver la jugada casi al instante.\\\hline
+  CU-25 · Finalizar la partida y aplicar la progresión & Sí & Elo, estadísticas, monedas y cierre de participaciones cambian juntos o no cambia ninguno (RN-12); una falla no debe perder el cierre de la partida (RN-13).\\\hline
+  CU-24 · Abandonar y CU-26 · Reconectar & Sí & Fallas de red: la desconexión no detiene el reloj, el rival puede reclamar a los 60 segundos (CU-24 RN-06) y el jugador que vuelve debe ver el tablero exactamente como quedó (CU-26 RN-02, RN-06).\\\hline
+  CU-27 · Jugar contra la IA & Sí & La IA debe respetar exactamente las mismas reglas que un jugador humano (RN-04).\\\hline
+  CU-28 · Enviar un mensaje de chat & Sí & Ningún mensaje con palabras prohibidas debe llegar a otro jugador, aunque el emisor modifique su cliente; si no puede revisarse, no se entrega (RN-01, RN-11); el ritmo de envío está acotado (RN-04).\\\hline
+  CU-34 · Ver una partida como espectador & Sí & Hasta 200 espectadores por partida (RN-03) ven las jugadas con ocho segundos de retraso (RN-01), y lo que ven no se guarda (D-19).\\\hline
+  CU-38 · Comprar un objeto y CU-39 · Comprar y abrir una caja & Sí & Economía: un jugador no debe poder alterar el precio ni el resultado del sorteo (CU-38 RN-03, CU-39 RN-08); objeto, movimiento de monedas y saldo cambian juntos o no cambia ninguno (CU-38 RN-08); una compra no se cobra dos veces aunque se pierda la respuesta (RN-09).\\\hline
+  CU-44 · Aplicar una sanción y CU-48 · Consultar las bitácoras & Sí & Una sanción debe surtir efecto de inmediato, aunque el jugador ya tenga una sesión abierta (CU-01 RN-07); nadie debe poder alterar ni borrar las bitácoras (CU-48 RN-02).\\\hline
+  CU-05 a CU-16, CU-18, CU-19, CU-22, CU-23, CU-29 a CU-33, CU-35 a CU-37, CU-40 a CU-43, CU-45 a CU-47, CU-49 & No & No plantean necesidades distintas de las de los casos anteriores (sesión, jugadas válidas, cambios completos o ninguno) y siguen la estructura general que resulte de las decisiones de la sección 3.\\\hline
 \end{tabularx}
 
 \subsection{Restricciones, supuestos y condiciones del negocio}
 \hint{Una restricción viene impuesta: el equipo no la decide. Un supuesto es algo que creen cierto pero no han comprobado. Si una fila habla de tiempos de respuesta o de carga, probablemente es un escenario (2.5).}
 \noindent\begin{tabularx}{\linewidth}{|p{3.6cm}|Y|Y|}\hline
   \headrow\hd{Tipo} & \hd{Enunciado} & \hd{Qué pasa si cambia o resulta falso}\\\hline
-  \small Restricción & El curso prohíbe el stack web, WebSockets, SignalR, gRPC y REST: la comunicación debe ser con WCF. & Si se permitiera otra tecnología, la capa de comunicación cambiaría, pero los contratos y el servidor como autoridad se conservarían.\\\hline
+  \small Restricción & El curso pide comunicación dúplex sobre net.tcp con llamadas asíncronas y prohíbe el stack web, WebSockets, SignalR, gRPC y REST. & Se ampliarían las opciones de comunicación y habría que volver a comparar las alternativas de ADR-002.\\\hline
   \small Restricción & El lenguaje es C\# sobre .NET; el sistema es una aplicación de escritorio cliente-servidor. & Cambiar de lenguaje o de plataforma invalidaría todas las decisiones tecnológicas.\\\hline
-  \small Restricción & El sistema debe compilar y ejecutarse en macOS arm64 y en Windows, porque cada integrante trabaja en uno de ellos. & Si ambos usaran Windows, volverían a ser viables WCF de .NET Framework y MonoGame WindowsDX, pero no cambiaría la estructura en capas.\\\hline
-  \small Restricción & La base de datos es SQL Server; los datos se guardan en Unicode con la intercalación \texttt{Modern\_Spanish\_100\_CI\_AS\_SC\_UTF8} (D-21). & Otro motor obligaría a reescribir los scripts y a revisar los índices filtrados que garantizan reglas como la de una sola participación sin terminar.\\\hline
-  \small Supuesto & El profesor acepta CoreWCF y EF Core como equivalentes a WCF y a la capa de acceso a datos vistas en clase (pendiente de confirmar, R-01). & Habría que volver a WCF de .NET Framework, lo que deja el servidor solo en Windows, o cambiar el acceso a datos a ADO.NET; los contratos se conservarían.\\\hline
-  \small Supuesto & El juego se usa en una red local o de aula, con decenas de jugadores conectados a la vez y no miles. & Con miles de jugadores, un único servidor con estado en memoria (cola, partidas, espectadores) no bastaría y habría que repartir el estado.\\\hline
-  \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, \texttt{SecurityMode.None} deja expuestas las credenciales y habría que añadir seguridad de transporte (R-02).\\\hline
-  \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema. & Si el ranking no importara, la validación en el servidor seguiría siendo necesaria para las reglas, pero las transacciones del cierre serían menos críticas.\\\hline
+  \small Restricción & El sistema debe compilar y ejecutarse en macOS arm64 y en Windows, porque cada integrante trabaja en uno de ellos. & Si ambos usaran Windows, volverían a ser viables tecnologías solo de Windows, como WCF de .NET Framework o MonoGame WindowsDX.\\\hline
+  \small Restricción & La base de datos es SQL Server y los textos deben guardarse en Unicode. & Otro motor obligaría a rehacer el modelo de datos ya entregado en la actividad A1.\\\hline
+  \small Restricción & El inicio de sesión debe ofrecer autenticación de doble factor (CON-08); el mecanismo (correo electrónico, aplicación autenticadora TOTP u otro) queda a criterio del equipo (Q-03). & Obliga a depender de un servicio externo al iniciar sesión, a proteger secretos y códigos y a ofrecer una forma de recuperar el acceso; si se quitara, el inicio de sesión volvería a un solo paso.\\\hline
+  \small Supuesto & El juego se usa en una red local o de aula, con decenas de jugadores conectados a la vez y no miles. & Con miles de jugadores la carga cambiaría por órdenes de magnitud y habría que replantear los escenarios de desempeño y escalabilidad (QAS-03, QAS-12).\\\hline
+  \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, alguien podría leer credenciales y sesiones en tránsito; habría que revisar QAS-02 y la protección del canal (ADR-004, R-01).\\\hline
+  \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema. & Si el ranking no importara, bajaría la prioridad de QAS-01 y QAS-06, aunque las reglas del juego seguirían teniendo que cumplirse.\\\hline
   \small Objetivo de negocio & Que la economía de monedas y cajas sea confiable y transparente: probabilidades visibles y sin dinero real (CU-38 RN-01, CU-39 RN-01). & Introducir dinero real traería obligaciones legales y de seguridad fuera del alcance del curso.\\\hline
   \small Condición organizacional & Equipo de dos personas, una en macOS arm64 y otra en Windows, durante el periodo agosto 2026 – enero 2027, con entregas parciales evaluadas. & Con menos tiempo se recortarían funciones de prioridad baja (cajas, espectadores), no la estructura.\\\hline
-  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-07). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
+  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-06). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
 \end{tabularx}
 
 \subsection{Escenarios de calidad y árbol de utilidad}
 \hint{Entre 8 y 12 escenarios medibles; copien la ficha para cada uno. La respuesta dice qué hace el sistema y la medida dice cómo se comprueba. No escriban la solución dentro del escenario.}
 \begin{ficha}{QAS-01 · Seguridad · Jugada ilegal desde un cliente modificado}
-  \frow{Fuente}{Un jugador con un cliente modificado o con una herramienta propia que habla net.tcp}
+  \frow{Fuente}{Un jugador con un cliente modificado o con una herramienta propia que imita al cliente}
   \frow{Estímulo}{Envía una jugada ilegal: mover el peón dos casillas sin salto, colocar un muro que encierra al rival, jugar fuera de turno o repetir el número de orden de una jugada ya aplicada}
   \frow{Entorno}{Partida clasificatoria en curso, operación normal}
-  \frow{Artefacto}{Operaciones de partida del servidor (CU-20, CU-21)}
-  \frow{Respuesta}{El servidor recalcula la jugada sobre su propio estado, la rechaza con un resultado codificado, no cambia el tablero ni el turno y registra el intento}
-  \frow{Medida}{El 100\,\% de los casos de una batería de al menos 30 jugadas ilegales (una por regla de CU-20 y CU-21) se rechaza y el estado guardado queda idéntico; se comprueba con pruebas unitarias de los servicios contra dobles de los repositorios}
+  \frow{Artefacto}{Las jugadas de una partida en curso (CU-20, CU-21)}
+  \frow{Respuesta}{El sistema rechaza la jugada, no cambia el tablero ni el turno, avisa al jugador por qué no es válida y deja registro del intento}
+  \frow{Medida}{El 100\,\% de los casos de una batería de al menos 30 jugadas ilegales (una por regla de CU-20 y CU-21) se rechaza y el estado guardado de la partida queda idéntico; se comprueba enviando la batería desde un cliente de prueba}
   \frow{Prioridad}{(A, A)}
   \frow{Activo que se protege}{El estado de la partida y, por él, el elo y las monedas que otorga}
   \frow{Actor de amenaza}{Jugador autenticado que controla su propio cliente}
-  \frow{Límite de confianza}{La conexión net.tcp entre el cliente y el servidor: nada de lo que llega del cliente se considera válido sin verificarlo}
+  \frow{Límite de confianza}{Entre el equipo del jugador y el resto del sistema: lo que llega desde el cliente no es confiable}
 \end{ficha}
 
 \begin{ficha}{QAS-02 · Seguridad · Adivinación de contraseñas}
   \frow{Fuente}{Un atacante que conoce el nickname o el correo de una víctima}
   \frow{Estímulo}{Prueba contraseñas en serie contra el inicio de sesión}
-  \frow{Entorno}{Operación normal; el canal no tiene seguridad de transporte}
-  \frow{Artefacto}{Servicio de cuentas y tabla de cuentas}
+  \frow{Entorno}{Operación normal; el atacante puede conectarse al sistema desde la misma red}
+  \frow{Artefacto}{Inicio de sesión y datos de las cuentas}
   \frow{Respuesta}{Responde siempre con el mismo resultado genérico, bloquea la cuenta de forma escalonada y registra cada intento en la bitácora de accesos sin la contraseña recibida}
-  \frow{Medida}{Al tercer fallo consecutivo la cuenta queda bloqueada 5 minutos, al sexto 30 y desde el noveno 60 (CU-01 RN-03); en 100 intentos, la diferencia entre el tiempo medio de respuesta con cuenta inexistente y con contraseña incorrecta es menor a 50 ms; ninguna fila de la base ni línea de bitácora contiene una contraseña en claro. Se comprueba con pruebas unitarias del servicio y una medición sobre el servidor local}
+  \frow{Medida}{Al tercer fallo consecutivo la cuenta queda bloqueada 5 minutos, al sexto 30 y desde el noveno 60 (CU-01 RN-03); en 100 intentos, la diferencia entre el tiempo medio de respuesta con cuenta inexistente y con contraseña incorrecta es menor a 50 ms; ninguna fila de la base ni línea de bitácora contiene una contraseña en claro. Se comprueba con un cliente de prueba que lanza los intentos y con una revisión de la base y de las bitácoras}
   \frow{Prioridad}{(A, M)}
   \frow{Activo que se protege}{Las credenciales de la cuenta y todo lo que posee: elo, monedas y objetos}
   \frow{Actor de amenaza}{Persona sin la contraseña de la víctima, con un cliente propio y acceso a la red del servidor}
-  \frow{Límite de confianza}{La operación de inicio de sesión del servidor y, detrás de él, la base de datos, a la que solo llega el servidor con un usuario de mínimo privilegio}
+  \frow{Límite de confianza}{Entre una persona aún no autenticada y el inicio de sesión; las credenciales guardadas no deben poder leerse aunque alguien obtenga una copia de los datos}
 \end{ficha}
 
 \begin{ficha}{QAS-03 · Desempeño · Jugada vista por el rival}
   \frow{Fuente}{Un jugador}
   \frow{Estímulo}{Confirma una jugada válida en su turno}
   \frow{Entorno}{Red local del aula, con 20 partidas simultáneas en el servidor}
-  \frow{Artefacto}{Servicio de partida, base de datos y cliente del rival}
-  \frow{Respuesta}{El servidor valida y guarda la jugada y la notifica a todos los participantes}
-  \frow{Medida}{El percentil 95 del tiempo entre que el servidor recibe la jugada y el cliente del rival la recibe es menor a 500 ms; se mide con marcas de tiempo en las bitácoras de servidor y cliente en una prueba de carga con clientes simulados}
+  \frow{Artefacto}{La partida en curso y el cliente del rival}
+  \frow{Respuesta}{El sistema acepta la jugada, la guarda y la muestra en el tablero de todos los participantes}
+  \frow{Medida}{El percentil 95 del tiempo entre que el jugador confirma la jugada y el cliente del rival la recibe es menor a 500 ms; se mide con marcas de tiempo en las bitácoras de ambos clientes en una prueba de carga con clientes simulados}
   \frow{Prioridad}{(A, A)}
 \end{ficha}
 
@@ -283,8 +300,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{Un jugador registrado}
   \frow{Estímulo}{Inicia sesión con credenciales correctas}
   \frow{Entorno}{Operación normal, sin segundo factor activado}
-  \frow{Artefacto}{Servicio de cuentas}
-  \frow{Respuesta}{Valida las credenciales, abre la sesión y entrega el token}
+  \frow{Artefacto}{Inicio de sesión}
+  \frow{Respuesta}{Comprueba las credenciales y da acceso al menú principal}
   \frow{Medida}{Menos de 1 segundo desde que el jugador pulsa «Iniciar sesión» hasta que ve el menú, sin contar servicios externos (CU-01 RN-11), en el 95\,\% de 50 intentos; se mide con cronómetro en el cliente}
   \frow{Prioridad}{(M, M)}
 \end{ficha}
@@ -294,8 +311,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Estímulo}{El jugador pierde la conexión a mitad de una partida}
   \frow{Entorno}{Partida en curso, el servidor sigue funcionando}
   \frow{Artefacto}{Partida en curso y cliente del jugador}
-  \frow{Respuesta}{La partida continúa con el reloj corriendo; el rival puede reclamar la victoria a los 60 segundos; si el jugador vuelve, recibe el estado completo y sigue jugando (CU-24, CU-26)}
-  \frow{Medida}{Ninguna jugada guardada se pierde; tras reconectar, el tablero del cliente coincide con el del servidor en menos de 2 segundos; se comprueba desconectando el cable o cerrando el cliente en 10 partidas de prueba}
+  \frow{Respuesta}{La partida continúa con el reloj corriendo; el rival puede reclamar la victoria a los 60 segundos; si el jugador vuelve, ve el tablero como quedó y sigue jugando (CU-24, CU-26)}
+  \frow{Medida}{Ninguna jugada guardada se pierde; tras reconectar, el tablero que ve el jugador coincide con el de su rival en menos de 2 segundos; se comprueba desconectando el cable o cerrando el cliente en 10 partidas de prueba}
   \frow{Prioridad}{(A, A)}
 \end{ficha}
 
@@ -303,9 +320,9 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{La base de datos}
   \frow{Estímulo}{Deja de responder mientras se escriben los resultados de una partida terminada}
   \frow{Entorno}{Cierre de una partida clasificatoria (CU-25)}
-  \frow{Artefacto}{Servicio de partida y repositorios de partidas, estadísticas y monedas}
+  \frow{Artefacto}{Cierre de la partida: elo, estadísticas y monedas}
   \frow{Respuesta}{No queda escrito ningún resultado parcial; la partida se marca pendiente de cierre y se reintenta (CU-25 RN-12, RN-13)}
-  \frow{Medida}{Cero partidas con elo aplicado y monedas sin aplicar (o al revés) en 20 fallas provocadas; la partida se cierra en menos de 1 minuto después de que la base vuelve; se comprueba deteniendo el contenedor de SQL Server durante el cierre}
+  \frow{Medida}{Cero partidas con elo aplicado y monedas sin aplicar (o al revés) en 20 fallas provocadas; la partida se cierra en menos de 1 minuto después de que la base vuelve; se comprueba deteniendo la base de datos durante el cierre}
   \frow{Prioridad}{(A, M)}
 \end{ficha}
 
@@ -313,8 +330,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{Un jugador}
   \frow{Estímulo}{Confirma la compra de un objeto o de una caja y la respuesta no llega a su cliente}
   \frow{Entorno}{Operación normal con pérdida de conexión justo después de enviar}
-  \frow{Artefacto}{Servicio de tienda y movimientos de monedas}
-  \frow{Respuesta}{La compra se aplica una sola vez o ninguna; el cliente consulta el estado en lugar de reenviar (CU-38 RN-08, RN-09)}
+  \frow{Artefacto}{Compras de la tienda y saldo de monedas}
+  \frow{Respuesta}{La compra se aplica una sola vez o ninguna, y al recuperar la conexión el jugador ve si se hizo (CU-38 RN-08, RN-09)}
   \frow{Medida}{En 100 compras con la conexión cortada, el saldo de cada cuenta es igual a la suma de sus movimientos y ninguna cuenta tiene un objeto cobrado dos veces; se comprueba con una consulta SQL sobre la base después de la prueba}
   \frow{Prioridad}{(A, M)}
 \end{ficha}
@@ -322,7 +339,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \begin{ficha}{QAS-08 · Portabilidad · Dos sistemas operativos}
   \frow{Fuente}{Un integrante del equipo}
   \frow{Estímulo}{Clona el repositorio en macOS arm64 o en Windows, compila y ejecuta}
-  \frow{Entorno}{Desarrollo, con el SDK de .NET 10 y SQL Server 2022 en Docker}
+  \frow{Entorno}{Desarrollo, con las herramientas que el equipo usa en cada sistema}
   \frow{Artefacto}{Toda la solución}
   \frow{Respuesta}{Compila, pasa las pruebas y el cliente de un sistema juega una partida completa contra un servidor en el otro}
   \frow{Medida}{Cero cambios de código o de configuración del repositorio entre sistemas; se comprueba antes de cada entrega con una partida cruzada Mac–Windows en ambos sentidos}
@@ -333,9 +350,9 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{El equipo}
   \frow{Estímulo}{Necesita cambiar el servicio de correo o el mecanismo del segundo factor (CU-01 RN-08)}
   \frow{Entorno}{Desarrollo}
-  \frow{Artefacto}{Servicios de cuentas}
+  \frow{Artefacto}{Envío de correos y verificación del segundo factor}
   \frow{Respuesta}{Se reemplaza la implementación sin tocar los flujos de los casos de uso}
-  \frow{Medida}{El cambio modifica solo una clase de implementación y su registro en la raíz de composición; cero cambios en contratos, en el cliente y en los servicios que la usan; se comprueba con el diff del cambio}
+  \frow{Medida}{El cambio no toca los flujos de los casos de uso ni el cliente y se completa en menos de un día de trabajo; se comprueba revisando el diff del cambio}
   \frow{Prioridad}{(B, B)}
 \end{ficha}
 
@@ -343,8 +360,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{Un integrante del equipo}
   \frow{Estímulo}{Ejecuta las pruebas de las reglas del juego y de los servicios}
   \frow{Entorno}{Desarrollo, sin base de datos ni servidor en ejecución}
-  \frow{Artefacto}{Reglas del juego y servicios del servidor}
-  \frow{Respuesta}{Las pruebas corren contra el dominio y contra dobles de los repositorios}
+  \frow{Artefacto}{Reglas del juego y de los casos de uso}
+  \frow{Respuesta}{Las pruebas se ejecutan sin base de datos ni red y reportan el resultado de cada regla}
   \frow{Medida}{El 100\,\% de las reglas de negocio de CU-20 y CU-21 tiene al menos una prueba; la suite unitaria completa termina en menos de 30 segundos en cualquiera de las dos máquinas}
   \frow{Prioridad}{(M, B)}
 \end{ficha}
@@ -353,9 +370,9 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{Un jugador}
   \frow{Estímulo}{Cambia el idioma de en-US a es-MX}
   \frow{Entorno}{Operación normal}
-  \frow{Artefacto}{Cliente y resultados del servidor}
+  \frow{Artefacto}{Pantallas y mensajes del juego}
   \frow{Respuesta}{Todas las pantallas y todos los mensajes de error se muestran en el idioma elegido; el chat no se traduce (CU-28 RN-12)}
-  \frow{Medida}{Cero textos visibles fuera de los recursos \texttt{.resx}; cada resultado codificado del servidor tiene clave en ambos idiomas; se comprueba con una prueba que compara las claves de los dos archivos y las de las enumeraciones de resultado}
+  \frow{Medida}{Cero textos en otro idioma al recorrer todas las pantallas y provocar cada mensaje de error en es-MX; agregar un tercer idioma no requiere cambiar código; se comprueba con el recorrido y con una prueba automática que verifica que no falte ninguna traducción}
   \frow{Prioridad}{(M, B)}
 \end{ficha}
 
@@ -363,7 +380,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Fuente}{Hasta 200 espectadores (CU-34 RN-03)}
   \frow{Estímulo}{Se conectan a la misma partida}
   \frow{Entorno}{Partida clasificatoria en curso}
-  \frow{Artefacto}{Servicio de espectadores y servicio de partida}
+  \frow{Artefacto}{Difusión de una partida a sus espectadores}
   \frow{Respuesta}{Cada espectador recibe las jugadas con el retraso fijo; los jugadores no notan la carga}
   \frow{Medida}{Retraso de 8 ± 1 segundos para todos los espectadores; el percentil 95 de QAS-03 para los jugadores no empeora más de 10\,\%; se mide con 200 clientes simulados}
   \frow{Prioridad}{(M, A)}
@@ -379,7 +396,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \headrow\multicolumn{4}{|l|}{\hd{Utilidad de Bastión}}\\\hline
   \headrow\hd{Atributo} & \hd{Refinamiento} & \hd{Escenario} & \hd{(Imp., Dif.)}\\\hline
   \multirow{2}{*}{\small\bfseries Seguridad} & Integridad de la partida frente a un cliente modificado & QAS-01 & (A, A)\\\cline{2-4}
-  & Confidencialidad de las credenciales sin seguridad de transporte & QAS-02 & (A, M)\\\hline
+  & Protección de las credenciales frente a la adivinación & QAS-02 & (A, M)\\\hline
   \multirow{3}{*}{\small\bfseries Desempeño} & Latencia de la jugada hacia el rival & QAS-03 & (A, A)\\\cline{2-4}
   & Tiempo de inicio de sesión & QAS-04 & (M, M)\\\cline{2-4}
   & Difusión a espectadores sin afectar a los jugadores & QAS-12 & (M, A)\\\hline
@@ -397,13 +414,13 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Entre 5 y 7. Si todos vienen de escenarios, expliquen en una línea por qué ninguna función, restricción, objetivo o condición del equipo obliga a estructurar el sistema.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.7cm}|Y|Y|Y|}\hline
   \headrow\hd{ASR} & \hd{Qué debe cumplir la arquitectura} & \hd{Procedencia} & \hd{Viene de}\\\hline
-  ASR-01 & El servidor es la única autoridad: toda regla del juego, de la cuenta y de la economía se valida y se decide en el servidor; el cliente solo envía intenciones y muestra el estado que recibe. & Escenario, Función & QAS-01, QAS-07, CU-20, CU-21, CU-38, CU-39\\\hline
-  ASR-02 & El servidor debe poder avisar a los clientes sin que pregunten (jugadas, chat, emparejamiento, espectadores), con llamadas asíncronas y usando solo tecnologías permitidas por el curso. & Escenario, Restricción & QAS-03, QAS-12, CU-17, CU-28, CU-34, restricción de tecnologías del curso\\\hline
+  ASR-01 & Ninguna regla del juego, de la cuenta ni de la economía puede depender de que el cliente sea honesto: un cliente modificado no debe poder alterar una partida, un saldo ni una compra. & Escenario, Función & QAS-01, QAS-07, CU-20, CU-21, CU-38, CU-39\\\hline
+  ASR-02 & Los cambios de una partida, del chat, del emparejamiento y de los espectadores deben llegar a cada cliente interesado en menos de 500 ms, aun con 200 espectadores, con comunicación asíncrona y sin tecnologías prohibidas por el curso. & Escenario, Restricción & QAS-03, QAS-12, CU-17, CU-28, CU-34, restricción de tecnologías del curso\\\hline
   ASR-03 & Cliente y servidor deben compilarse y ejecutarse sin cambios en macOS arm64 y en Windows. & Restricción, Condición organizacional & QAS-08, restricción multiplataforma, equipo Mac–Windows\\\hline
-  ASR-04 & Sin seguridad de transporte, la seguridad descansa en el servidor: contraseñas con resumen y sal, token de sesión en cada llamada, bloqueo escalonado, bitácoras de solo inserción y acceso a la base con mínimo privilegio. & Escenario, Supuesto & QAS-02, CU-01, CU-44, CU-48, supuesto de red de confianza\\\hline
-  ASR-05 & Toda operación que cambia una partida o la economía se guarda de forma atómica antes de notificarse, para que una falla del cliente, de la red o de la base no deje estados parciales. & Escenario, Función & QAS-05, QAS-06, QAS-07, CU-25, CU-26\\\hline
-  ASR-06 & Las reglas del juego viven aisladas, sin dependencias, y los servicios acceden a los datos a través de interfaces, para probarlas sin infraestructura y para que la IA las reutilice. & Condición organizacional, Escenario, Función & QAS-09, QAS-10, CU-27, equipo de dos personas\\\hline
-  ASR-07 & El servidor devuelve resultados codificados, nunca textos; todo texto visible está en recursos por idioma y el texto se guarda en Unicode. & Función, Escenario & QAS-11, CU-01 RN-12, CU-28 RN-12, D-21\\\hline
+  ASR-04 & Las cuentas y las sesiones deben resistir la adivinación de contraseñas y el robo de datos: ninguna contraseña ni código del segundo factor puede recuperarse a partir de lo que se guarda o se registra, el inicio de sesión ofrece doble factor, una cuenta sancionada pierde el acceso de inmediato y las bitácoras no pueden alterarse. & Escenario, Supuesto, Restricción & QAS-02, CU-01 (FA-11, RN-08, RN-09), CU-44, CU-48, CON-08, supuesto de red de confianza\\\hline
+  ASR-05 & Ninguna falla del cliente, de la red o de la base de datos puede dejar una partida, su cierre o una compra a medias, ni aplicar dos veces la misma operación. & Escenario, Función & QAS-05, QAS-06, QAS-07, CU-25, CU-26\\\hline
+  ASR-06 & Las reglas del juego y de los casos de uso deben poder probarse sin base de datos ni red, la IA debe jugar con exactamente las mismas reglas que un jugador y los servicios externos (correo, segundo factor) deben poder cambiarse sin tocar los flujos. & Condición organizacional, Escenario, Función & QAS-09, QAS-10, CU-27, equipo de dos personas\\\hline
+  ASR-07 & Todo texto visible, incluidos los errores, debe mostrarse en el idioma elegido (en-US o es-MX); agregar un idioma no debe requerir cambiar código y los textos de los jugadores deben conservarse en Unicode. & Función, Escenario & QAS-11, CU-01 RN-12, CU-28 RN-12, D-21\\\hline
 \end{tabularx}
 
 % =====================================================================
@@ -416,10 +433,10 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \noindent\begin{tabularx}{\linewidth}{|p{1.9cm}|Y|Y|p{3.2cm}|}\hline
   \headrow\hd{ADR} & \hd{Decisión} & \hd{Estado} & \hd{ASR que atiende}\\\hline
   ADR-001 & Organizar el sistema en capas cliente-servidor con el servidor como única autoridad & Aceptado & ASR-01, ASR-05, ASR-06\\\hline
-  ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado (confirmar con el profesor, R-01) & ASR-02, ASR-03\\\hline
+  ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado & ASR-02, ASR-03\\\hline
   ADR-003 & Construir el cliente con MonoGame DesktopGL & Aceptado & ASR-03\\\hline
   ADR-004 & Usar \texttt{SecurityMode.None} y concentrar la seguridad en el servidor & Aceptado & ASR-04, ASR-03\\\hline
-  ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado (confirmar con el profesor, R-01) & ASR-04, ASR-05, ASR-03\\\hline
+  ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado & ASR-04, ASR-05, ASR-03\\\hline
   ADR-006 & Traducir en el cliente los resultados codificados del servidor & Aceptado & ASR-07\\\hline
 \end{tabularx}
 
@@ -427,22 +444,22 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \begin{ficha}{ADR-001 · Organizar el sistema en capas cliente-servidor con el servidor como única autoridad}
   \frow{Estado}{Aceptado}
   \frow{Contexto}{Un cliente modificado no debe poder hacer trampa (QAS-01), la economía no admite cobros dobles (QAS-07), el cierre de partida debe ser atómico (QAS-06) y el equipo necesita probar las reglas sin infraestructura (QAS-10). Están en juego ASR-01, ASR-05 y ASR-06.}
-  \frow{Alternativas}{A. Cliente-servidor en capas con servidor autoritativo: el cliente envía intenciones; el servidor valida con un dominio sin dependencias y guarda a través de repositorios. A favor: un solo lugar decide; el dominio se prueba solo y la IA lo reutiliza; solo el servidor toca la base. En contra: cada jugada cuesta un viaje de ida y vuelta; el servidor es punto único de falla (R-05).\newline B. Igual a igual, con el cliente de un jugador como anfitrión de la partida. A favor: sin servidor para jugar; menor latencia para el anfitrión. En contra: el anfitrión puede hacer trampa, lo que invalida el ranking; el elo y las monedas igual necesitan un servidor central.\newline C. Reglas en el cliente y servidor como simple relé y almacén. A favor: respuesta inmediata; servidor más sencillo. En contra: un cliente modificado decide el resultado; contradice CU-20 RN-01 y CU-38 RN-03.}
+  \frow{Alternativas}{A. Cliente-servidor en capas con servidor autoritativo: el cliente envía intenciones; el servidor valida con un dominio sin dependencias y guarda a través de repositorios. A favor: un solo lugar decide; el dominio se prueba solo y la IA lo reutiliza; solo el servidor toca la base. En contra: cada jugada cuesta un viaje de ida y vuelta; el servidor es punto único de falla (R-04).\newline B. Igual a igual, con el cliente de un jugador como anfitrión de la partida. A favor: sin servidor para jugar; menor latencia para el anfitrión. En contra: el anfitrión puede hacer trampa, lo que invalida el ranking; el elo y las monedas igual necesitan un servidor central.\newline C. Reglas en el cliente y servidor como simple relé y almacén. A favor: respuesta inmediata; servidor más sencillo. En contra: un cliente modificado decide el resultado; contradice CU-20 RN-01 y CU-38 RN-03.}
   \frow{Criterios}{Integridad frente a clientes modificados (ASR-01), atomicidad de lo que se guarda (ASR-05), capacidad de prueba y reutilización de reglas (ASR-06), esfuerzo para dos personas.}
   \frow{Decisión}{A. Patrón cliente-servidor con arquitectura en capas: cliente (presentación) → contratos; host → servicios → dominio; servicios → acceso a datos → base de datos. Patrón repositorio (\texttt{IXRepository}) entre servicios y datos. El cliente recibe el estado por callbacks y lo calcula solo para dar respuesta inmediata, nunca para decidir.}
   \frow{Consecuencias}{Se gana un único punto de verdad, pruebas del dominio y de los servicios con dobles, y reglas de dependencia comprobables. Se paga la latencia de ida y vuelta en cada jugada (QAS-03) y la dependencia de un único servidor.}
-  \frow{Riesgos}{R-05, R-06}
+  \frow{Riesgos}{R-04, R-05}
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04, C-05, C-06}
 \end{ficha}
 
 \begin{ficha}{ADR-002 · Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas}
-  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
-  \frow{Contexto}{El curso exige WCF y prohíbe stack web, WebSockets, SignalR, gRPC y REST. El servidor debe avisar sin que se le pregunte (jugadas, chat, emparejamiento, espectadores: QAS-03, QAS-12) y el servidor debe correr en macOS y en Windows (QAS-08). Están en juego ASR-02 y ASR-03.}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{El curso pide comunicación dúplex sobre net.tcp con llamadas asíncronas y prohíbe stack web, WebSockets, SignalR, gRPC y REST. Los cambios de partida, chat, emparejamiento y espectadores deben llegar a los clientes en menos de 500 ms (QAS-03, QAS-12) y todo debe correr en macOS y en Windows (QAS-08). Están en juego ASR-02 y ASR-03.}
   \frow{Alternativas}{A. CoreWCF 1.9 sobre .NET 10, \texttt{NetTcpBinding} dúplex, contratos en una biblioteca netstandard2.0 y cliente con \texttt{System.ServiceModel}. A favor: corre en ambos sistemas; callbacks en el mismo canal; contratos compartidos. En contra: CoreWCF no implementa todo WCF; usa reflexión, por lo que no se puede recortar ni compilar AOT.\newline B. WCF clásico sobre .NET Framework 4.8. A favor: es lo que se ve en clase; implementación completa. En contra: solo Windows, de modo que el servidor viviría en una sola máquina del equipo (punto único de falla para el desarrollo) y el integrante de macOS no podría ejecutarlo.\newline C. CoreWCF de petición-respuesta con sondeo periódico del cliente. A favor: contratos más simples, sin callbacks. En contra: la latencia depende del intervalo de sondeo (incumple QAS-03 si es largo, sobrecarga el servidor si es corto); 200 espectadores sondeando multiplican la carga (QAS-12).}
-  \frow{Criterios}{Tecnologías permitidas, notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), latencia y carga.}
+  \frow{Criterios}{Tecnologías permitidas, entrega de cambios a los clientes (ASR-02), multiplataforma (ASR-03), latencia y carga.}
   \frow{Decisión}{A. Contratos de servicio y de callback en \texttt{Bastion.Contracts} (netstandard2.0), operaciones asíncronas en el cliente y difusión por callbacks en el servidor. \texttt{PublishTrimmed} y \texttt{PublishAot} quedan desactivados en \texttt{Directory.Build.props}.}
-  \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26) y la dependencia de que el profesor acepte CoreWCF como WCF.}
-  \frow{Riesgos}{R-01, R-06, R-09}
+  \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26).}
+  \frow{Riesgos}{R-05, R-08}
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04}
 \end{ficha}
 
@@ -452,8 +469,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Alternativas}{A. MonoGame DesktopGL 3.8.5. A favor: biblioteca de código, corre en macOS y Windows con OpenGL; todo lo hace el código C\# del equipo. En contra: no trae controles de interfaz, por lo que el equipo construye los suyos.\newline B. Godot con C\#. A favor: editor de escenas y controles de interfaz listos. En contra: buena parte del trabajo se hace en su editor y no en código, que es lo evaluado.\newline C. Unity. A favor: motor completo y documentación amplia. En contra: sobredimensionado para un tablero 2D; proyecto pesado de versionar entre dos personas.\newline D. Stride. A favor: motor C\# de código abierto. En contra: su editor solo funciona en Windows.\newline E. Avalonia. A favor: interfaz de escritorio multiplataforma en C\#. En contra: no es un motor de juego: sin bucle de juego ni animación del tablero.\newline F. MonoGame WindowsDX. A favor: DirectX nativo. En contra: solo Windows.}
   \frow{Criterios}{Multiplataforma (ASR-03), que el trabajo esté en código evaluable, peso del proyecto y curva de aprendizaje.}
   \frow{Decisión}{A. El cliente es \texttt{Bastion.Client} con MonoGame DesktopGL, un conjunto propio de controles y pantallas, y un navegador de pantallas.}
-  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-03).}
-  \frow{Riesgos}{R-03}
+  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-02).}
+  \frow{Riesgos}{R-02}
   \frow{Elementos afectados}{C-01}
 \end{ficha}
 
@@ -464,29 +481,29 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Criterios}{Funcionar entre ambos sistemas (ASR-03), proteger credenciales y estado (ASR-04), esfuerzo de despliegue.}
   \frow{Decisión}{A, con el supuesto de una red de confianza (sección 2.4). La alternativa C queda como mejora si el supuesto resulta falso.}
   \frow{Consecuencias}{Se gana un sistema que funciona en ambos sistemas y que no guarda secretos en claro. Se paga que un atacante en la misma red puede leer contraseñas y tokens en tránsito.}
-  \frow{Riesgos}{R-02}
+  \frow{Riesgos}{R-01}
   \frow{Elementos afectados}{C-02, C-03, C-04, C-06, C-07}
 \end{ficha}
 
 \begin{ficha}{ADR-005 · Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL}
-  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
-  \frow{Contexto}{Las operaciones de partida y economía deben ser atómicas (ASR-05), la base debe correr en las dos máquinas (ASR-03) y el servidor debe entrar con mínimo privilegio (ASR-04). Los scripts SQL del modelo de datos ya existen en los requisitos.}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{Las operaciones de partida y economía deben ser atómicas (ASR-05), la base debe correr en las dos máquinas (ASR-03) y los datos de las cuentas deben quedar protegidos (ASR-04). Los scripts SQL del modelo de datos ya existen en los requisitos.}
   \frow{Alternativas}{A. EF Core 10 con el proveedor de SQL Server, sin migraciones: los scripts SQL mandan y el código se ajusta a ellos; SQL Server 2022 en Docker. A favor: transacciones y consultas tipadas; un solo origen del esquema. En contra: hay que mantener a mano la correspondencia entre entidades y tablas.\newline B. EF Core con migraciones. A favor: el esquema se genera desde el código. En contra: dos fuentes de verdad, los scripts y las migraciones, que tarde o temprano divergen.\newline C. ADO.NET con SQL escrito a mano. A favor: control total y lo más cercano a lo visto en clase. En contra: mucho más código repetitivo y propenso a errores de mapeo.\newline D. Azure SQL Edge en Docker para tener imagen ARM en Mac. A favor: nativo en Apple silicon. En contra: Microsoft lo retiró.}
   \frow{Criterios}{Atomicidad (ASR-05), multiplataforma (ASR-03), un solo origen del esquema, esfuerzo.}
   \frow{Decisión}{A. \texttt{BastionDbContext} con configuraciones por entidad y repositorios en \texttt{Bastion.Server.Data}; el inicio de sesión \texttt{BastionServerConnection} no tiene permiso \texttt{DELETE}; la cadena de conexión vive en user-secrets o en variables de entorno, nunca en el repositorio. En Mac la imagen x64 corre con Rosetta.}
-  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac, y que el profesor acepte EF Core.}
-  \frow{Riesgos}{R-01, R-04}
+  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac.}
+  \frow{Riesgos}{R-03}
   \frow{Elementos afectados}{C-06, C-07}
 \end{ficha}
 
 \begin{ficha}{ADR-006 · Traducir en el cliente los resultados codificados del servidor}
   \frow{Estado}{Aceptado}
-  \frow{Contexto}{El juego se ofrece en en-US y es-MX (QAS-11); todo texto visible debe venir de catálogos de recursos (CU-01 RN-12, D-21) y el servidor no debe conocer el idioma de cada pantalla (ASR-07).}
+  \frow{Contexto}{El juego se ofrece en en-US y es-MX (QAS-11); todo texto visible, incluidos los errores, debe mostrarse en el idioma elegido y agregar un idioma no debe requerir cambiar código (ASR-07, CU-01 RN-12, D-21).}
   \frow{Alternativas}{A. El servidor devuelve enumeraciones de resultado; el cliente las convierte en una clave \texttt{Pantalla.Elemento} y busca el texto en \texttt{Strings.resx} (en-US, neutral y por omisión) o \texttt{Strings.es-MX.resx}. A favor: el contrato no cambia con el idioma; agregar un idioma solo agrega un archivo. En contra: hay que mantener la correspondencia código–clave.\newline B. El servidor genera el mensaje ya traducido según el idioma de la sesión. A favor: el cliente solo lo muestra. En contra: el texto viaja en el contrato; mezclar presentación en el servidor; el cliente no puede adaptar el mensaje a su pantalla.\newline C. Traducciones guardadas en la base de datos. A favor: se cambian sin recompilar. En contra: D-21 lo descarta; más consultas y más tablas sin necesidad.}
-  \frow{Criterios}{Separación de presentación (ASR-07), contratos estables, esfuerzo para agregar idiomas.}
+  \frow{Criterios}{Idioma de todos los textos (ASR-07), contratos estables, esfuerzo para agregar idiomas.}
   \frow{Decisión}{A. El idioma por omisión es en-US, lo que sustituye el es-MX por omisión previsto en D-21. Los correos, que salen del servidor, usan los recursos del servidor con el idioma preferido de la cuenta (D-21).}
   \frow{Consecuencias}{Se gana un contrato independiente del idioma y una prueba simple de claves faltantes. Se paga mantener dos archivos de recursos sincronizados.}
-  \frow{Riesgos}{R-08}
+  \frow{Riesgos}{R-07}
   \frow{Elementos afectados}{C-01, C-02, C-04}
 \end{ficha}
 
@@ -670,15 +687,14 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Se inicia en la primera entrega y se mantiene hasta la entrega final.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.8cm}|Y|Y|}\hline
   \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
-  R-01 & Decisión abierta & El profesor no ha confirmado que CoreWCF y EF Core sean aceptables en lugar de WCF de .NET Framework y del acceso a datos visto en clase (ADR-002, ADR-005). & Pedir la confirmación por escrito antes de la segunda entrega; si se rechaza, evaluar el impacto con los contratos ya aislados en C-02.\\\hline
-  R-02 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
-  R-03 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
-  R-04 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
-  R-05 & Riesgo & Un único servidor guarda en memoria la cola, las partidas en curso y los espectadores: si se cae, ese estado se pierde y el servicio se interrumpe (ADR-001, QAS-05). & Escribir cada jugada antes de notificarla (ASR-05) para reconstruir partidas desde la base; aceptar el punto único de falla dado el supuesto de uso en aula.\\\hline
-  R-06 & Riesgo & No se ha medido la latencia de los callbacks con 20 partidas ni la difusión a 200 espectadores (QAS-03, QAS-12). & Construir un prototipo de carga con clientes simulados para la entrega final (será una EV).\\\hline
-  R-07 & Decisión abierta & El repositorio remoto será GitLab o Bitbucket. & Elegir según lo que indique el curso; no afecta la arquitectura.\\\hline
-  R-08 & Pendiente & No se ha elegido el servicio de correo ni el proveedor del segundo factor, y los correos aún no tienen recursos por idioma (C-08, ADR-006). & Definir la interfaz en C-04 y una implementación de prueba que escriba en la bitácora; elegir el proveedor antes de construir CU-02 a CU-04.\\\hline
-  R-09 & Deuda & CoreWCF depende de reflexión y arrastra dependencias con vulnerabilidades conocidas: una se fijó a mano (\texttt{System.Security.\allowbreak{}Cryptography.Xml}) y nunca debe activarse \texttt{PublishTrimmed} ni \texttt{PublishAot} (ADR-002). & Revisar los avisos de paquetes en cada entrega; mantener la nota en \texttt{Directory.Build.props}.\\\hline
+  R-01 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
+  R-02 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
+  R-03 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
+  R-04 & Riesgo & Un único servidor guarda en memoria la cola, las partidas en curso y los espectadores: si se cae, ese estado se pierde y el servicio se interrumpe (ADR-001, QAS-05). & Escribir cada jugada antes de notificarla (ASR-05) para reconstruir partidas desde la base; aceptar el punto único de falla dado el supuesto de uso en aula.\\\hline
+  R-05 & Riesgo & No se ha medido la latencia de los callbacks con 20 partidas ni la difusión a 200 espectadores (QAS-03, QAS-12). & Construir un prototipo de carga con clientes simulados para la entrega final (será una EV).\\\hline
+  R-06 & Decisión abierta & El repositorio remoto será GitLab o Bitbucket. & Elegir según lo que indique el curso; no afecta la arquitectura.\\\hline
+  R-07 & Pendiente & No se ha elegido el servicio de correo ni el proveedor del segundo factor, y los correos aún no tienen recursos por idioma (C-08, ADR-006). & Definir la interfaz en C-04 y una implementación de prueba que escriba en la bitácora; elegir el proveedor antes de construir CU-02 a CU-04.\\\hline
+  R-08 & Deuda & CoreWCF depende de reflexión y arrastra dependencias con vulnerabilidades conocidas: una se fijó a mano (\texttt{System.Security.\allowbreak{}Cryptography.Xml}) y nunca debe activarse \texttt{PublishTrimmed} ni \texttt{PublishAot} (ADR-002). & Revisar los avisos de paquetes en cada entrega; mantener la nota en \texttt{Directory.Build.props}.\\\hline
 \end{tabularx}
 
 \subsection{Transición a Construcción\greenbadge{Entrega final}}
