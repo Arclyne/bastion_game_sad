@@ -1,0 +1,421 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands,es-tabla]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm,top=2.4cm,bottom=2.2cm,headheight=14pt]{geometry}
+\usepackage[dvipsnames,table]{xcolor}
+\usepackage{array,tabularx,booktabs,multirow}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{etoolbox}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=SADBlue,urlcolor=SADBlue]{hyperref}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+% ---------- Colors ----------
+\definecolor{SADBlue}{HTML}{1F5AA6}
+\definecolor{SADNavy}{HTML}{1F3864}
+\definecolor{SADHead}{HTML}{DCE6F2}
+\definecolor{SADLabel}{HTML}{EEF2F8}
+\definecolor{SADGrid}{HTML}{A6A6A6}
+\definecolor{SADGray}{HTML}{7F7F7F}
+\definecolor{SADGreen}{HTML}{2E7D32}
+\definecolor{SADGreenBg}{HTML}{E3F1E4}
+\definecolor{SADBlueBg}{HTML}{DCE6F2}
+\definecolor{SADNote}{HTML}{F1F4F9}
+
+% ---------- Header and footer ----------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyhead[R]{\footnotesize\color{SADGray}Diseño de Software · Plantilla SAD · versión ligera 5.0}
+\fancyfoot[C]{\footnotesize\color{SADGray}Página \thepage\ de \pageref{LastPage}}
+\fancypagestyle{plain}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}%
+  \fancyhead[R]{\footnotesize\color{SADGray}Diseño de Software · Plantilla SAD · versión ligera 5.0}%
+  \fancyfoot[C]{\footnotesize\color{SADGray}Página \thepage\ de \pageref{LastPage}}}
+
+% ---------- Headings ----------
+\titleformat{\subsection}{\large\bfseries\color{SADNavy}}{\thesubsection}{0.4em}{}
+\titlespacing*{\section}{0pt}{16pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+\titleformat{\section}[block]{\Large\bfseries\color{SADBlue}}{\thesection.}{0.4em}{}[{\color{SADBlue}\titlerule}]
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+
+% ---------- Text helpers ----------
+\newcommand{\ph}[1]{\textcolor{SADGray}{\textit{#1}}}
+\newcommand{\hint}[1]{{\itshape\color{black!70}#1}\par} % instruction under a heading
+\newcommand{\bluebadge}[1]{\hspace{0.8em}\colorbox{SADBlueBg}{\scriptsize\bfseries\color{SADBlue}\,#1\,}}
+\newcommand{\greenbadge}[1]{\hspace{0.4em}\colorbox{SADGreenBg}{\scriptsize\bfseries\color{SADGreen}\,#1\,}}
+
+% ---------- Tables ----------
+\arrayrulecolor{SADGrid}
+\renewcommand{\arraystretch}{1.35}
+\setlength{\tabcolsep}{6pt}
+\newcolumntype{L}{>{\columncolor{SADLabel}\bfseries\raggedright\arraybackslash}p{3.6cm}}
+\newcolumntype{Y}{>{\small\raggedright\arraybackslash}X}
+\newcommand{\hd}[1]{\textbf{\small #1}}
+\newcommand{\headrow}{\rowcolor{SADHead}}
+\AtBeginEnvironment{tabularx}{\small}
+
+% Callout box
+\newtcolorbox{callout}[1][]{enhanced,breakable,colback=SADNote,colframe=SADNote,boxrule=0pt,
+  borderline west={2.5pt}{0pt}{SADBlue},left=8pt,right=6pt,top=4pt,bottom=4pt,#1}
+
+% Key/value card: first row is the title, remaining rows are label/value
+\newenvironment{ficha}[1]
+  {\par\smallskip\noindent\small\begin{tabular}{|L|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-3.6cm-6\tabcolsep-3\arrayrulewidth\relax}|}\hline
+   \rowcolor{SADHead}\multicolumn{2}{|l|}{\bfseries #1}\\\hline}
+  {\end{tabular}\par\medskip}
+\newcommand{\frow}[2]{#1 & #2\\\hline}
+
+\newcommand{\checkitem}[1]{\item[$\square$] #1}
+
+\begin{document}
+
+% =====================================================================
+% Cover
+% =====================================================================
+\thispagestyle{plain}
+\begin{center}
+  {\bfseries\large UNIVERSIDAD VERACRUZANA\\[2pt]
+  FACULTAD DE ESTADÍSTICA E INFORMÁTICA\\[2pt]
+  LICENCIATURA EN INGENIERÍA DE SOFTWARE}\\[2pt]
+  {\color{SADGray}\large Diseño de Software}\\[2.2em]
+  {\bfseries\fontsize{22}{26}\selectfont\color{SADBlue} Documento de Arquitectura de Software (SAD)}\\[0.8em]
+  {\large\color{SADBlue} Plantilla del proyecto final · versión ligera 5.0}
+\end{center}
+
+\vspace{1.2em}
+\noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
+  Proyecto & \ph{[Nombre del videojuego o sistema]}\\\hline
+  Equipo e integrantes & \ph{[Identificador del equipo · nombre completo de cada integrante]}\\\hline
+  Versión del documento & \ph{[v0.1, v1.0…]}\\\hline
+  Entrega & \ph{[Primera entrega / Entrega final]}\\\hline
+  Fecha & \ph{[dd/mm/aaaa]}\\\hline
+\end{tabularx}
+
+\vspace{1.4em}
+\begin{callout}
+  {\bfseries\color{SADBlue}Cómo usar esta plantilla}\\[3pt]
+  {\small
+  \textbf{1. Llenen lo que corresponde a la entrega en curso (primera entrega o entrega final). Lo demás puede quedar vacío por ahora.}\\[3pt]
+  \textbf{2.} Documenten a fondo sólo lo que obliga a la arquitectura a tomar cierta forma. Si algo no aplica, díganlo en una línea y expliquen por qué.\\[3pt]
+  \textbf{3.} Usen sólo siete identificadores: \textbf{QAS} (escenario de calidad), \textbf{ASR}, \textbf{ADR}, \textbf{C} (módulo o componente), \textbf{V} (vista), \textbf{EV} (evidencia) y \textbf{R} (riesgo o pendiente). Todo lo demás se nombra.\\[3pt]
+  \textbf{4.} Cada decisión se escribe una sola vez, en su ficha de la sección 3. Las demás secciones la citan por su número de ADR.\\[3pt]
+  \textbf{5.} Antes de empezar, lean el ejemplo resuelto del Sistema de Gestión Hotelera: muestra cada sección bien llenada.\\[3pt]
+  \textbf{6.} Esta plantilla pide lo necesario para un trabajo logrado; lo que distingue un trabajo sobresaliente está en la rúbrica. Si algo aquí contradice el Manual o la Evaluación vigentes, mandan esos documentos. Si ya empezaron con otra versión de la plantilla, trasladen su contenido: el formato anterior no se recalifica.\\[5pt]
+  {\bfseries\color{SADBlue}La cadena que el documento debe permitir seguir:} escenario, función o restricción $\rightarrow$ \textbf{ASR} $\rightarrow$ \textbf{ADR} $\rightarrow$ elemento \textbf{C} $\rightarrow$ vista \textbf{V} $\rightarrow$ evidencia \textbf{EV} $\rightarrow$ riesgo residual \textbf{R}}
+\end{callout}
+
+\newpage
+
+% =====================================================================
+% 1. Control y glosario
+% =====================================================================
+\section{Control y glosario\bluebadge{Primera entrega}}
+\hint{Mantengan esta sección breve y actualícenla en cada entrega.}
+
+\subsection{Control e historial}
+\noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
+  Sistema & \ph{[Nombre y descripción en una línea]}\\\hline
+  Propósito del documento & \ph{[Qué permitirá hacer a quien lo lea]}\\\hline
+  Audiencia & \ph{[Quién lo leerá y para qué]}\\\hline
+  Alcance & \ph{[Qué parte del sistema cubre y qué queda fuera]}\\\hline
+\end{tabularx}
+
+\medskip
+\noindent\begin{tabularx}{\linewidth}{|p{2.6cm}|p{3cm}|Y|}\hline
+  \headrow\hd{Versión} & \hd{Fecha} & \hd{Cambios principales}\\\hline
+  \ph{[v0.1]} & \ph{[dd/mm/aaaa]} & \ph{[Qué se agregó o corrigió]}\\\hline
+  & & \\\hline
+\end{tabularx}
+
+\subsection{Resumen de la arquitectura}
+\hint{Máximo una página: problema, drivers principales, estructura general, decisiones esenciales y riesgos abiertos. Conviene escribirlo al final de cada entrega.}
+\ph{[Resumen.]}
+
+\subsection{Glosario}
+\noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
+  \headrow\hd{Término} & \hd{Significado en este proyecto}\\\hline
+  \ph{[Término]} & \ph{[Definición]}\\\hline
+  & \\\hline
+\end{tabularx}
+
+\subsection{Uso de IA generativa}
+\hint{Una fila por uso significativo. No anexen conversaciones.}
+\noindent\begin{tabularx}{\linewidth}{|Y|Y|Y|}\hline
+  \headrow\hd{Qué pidieron} & \hd{Qué aceptaron y qué rechazaron} & \hd{Cómo lo verificaron}\\\hline
+  \ph{[…]} & \ph{[…]} & \ph{[…]}\\\hline
+  & & \\\hline
+\end{tabularx}
+
+% =====================================================================
+% 2. Drivers
+% =====================================================================
+\section{Drivers\bluebadge{Primera entrega}}
+\hint{Expliquen qué obliga a la arquitectura a tomar cierta forma. Un ASR puede venir de un escenario de calidad, pero también de una función, una restricción, un objetivo de negocio o una condición del equipo.}
+
+\subsection{Contexto y frontera}
+\hint{En un párrafo: qué está dentro del sistema, qué queda fuera y con qué sistemas externos se comunica. El diagrama va en la sección 6 como V-01; aquí sólo refiéranlo.}
+\ph{[Descripción breve.]}
+
+\subsection{Interesados y preocupaciones}
+\hint{Incluyan sólo a quienes tienen una preocupación que puede cambiar la arquitectura. Una preocupación es lo que le importa a alguien, no una función del sistema.}
+\noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
+  \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
+  \ph{[Rol]} & \ph{[…]}\\\hline
+  & \\\hline
+  & \\\hline
+\end{tabularx}
+
+\subsection{Funciones clave}
+\hint{Usen los casos de uso o las historias de usuario que ya tienen, con sus identificadores. Señalen cuáles obligan a tomar decisiones arquitectónicas. Las demás pueden seguir la estructura general del sistema y documentarse sólo cuando sea necesario.}
+\noindent\begin{tabularx}{\linewidth}{|p{4.6cm}|p{3.2cm}|Y|}\hline
+  \headrow\hd{Función (CU o HU)} & \hd{¿Arquitectónicamente significativa?} & \hd{Por qué}\\\hline
+  \ph{[CU-01 · nombre]} & \ph{[Sí / No]} & \ph{[Qué la vuelve difícil: concurrencia, dinero, estado compartido, fallas…]}\\\hline
+  & & \\\hline
+\end{tabularx}
+
+\subsection{Restricciones, supuestos y condiciones del negocio}
+\hint{Una restricción viene impuesta: el equipo no la decide. Un supuesto es algo que creen cierto pero no han comprobado. Si una fila habla de tiempos de respuesta o de carga, probablemente es un escenario (2.5).}
+\noindent\begin{tabularx}{\linewidth}{|p{3.6cm}|Y|Y|}\hline
+  \headrow\hd{Tipo} & \hd{Enunciado} & \hd{Qué pasa si cambia o resulta falso}\\\hline
+  \small Restricción & \ph{[…]} & \ph{[…]}\\\hline
+  \small Supuesto & \ph{[…]} & \ph{[…]}\\\hline
+  \small Objetivo de negocio & \ph{[…]} & \ph{[…]}\\\hline
+  \small Condición organizacional & \ph{[Equipo, calendario, soporte…]} & \ph{[…]}\\\hline
+\end{tabularx}
+
+\subsection{Escenarios de calidad y árbol de utilidad}
+\hint{Entre 8 y 12 escenarios medibles; copien la ficha para cada uno. La respuesta dice qué hace el sistema y la medida dice cómo se comprueba. No escriban la solución dentro del escenario.}
+\begin{ficha}{QAS-\_\_ · \ph{[atributo de calidad]} · \ph{[nombre corto]}}
+  \frow{Fuente}{\ph{[Quién o qué provoca el estímulo]}}
+  \frow{Estímulo}{\ph{[Qué ocurre]}}
+  \frow{Entorno}{\ph{[En qué condición está el sistema]}}
+  \frow{Artefacto}{\ph{[Qué parte del sistema se ve afectada]}}
+  \frow{Respuesta}{\ph{[Qué hace el sistema]}}
+  \frow{Medida}{\ph{[Número verificable y cómo se comprueba]}}
+  \frow{Prioridad}{\ph{[(importancia, dificultad) con A, M o B]}}
+\end{ficha}
+
+\begin{callout}
+  {\small\bfseries\color{SADBlue}Escenario de seguridad.} {\small Al menos uno. Agreguen a su ficha tres filas: activo que se protege, actor de amenaza y límite de confianza.}
+\end{callout}
+
+\medskip
+\hint{Árbol de utilidad: insértenlo aquí o usen una tabla equivalente. Prioricen por importancia y dificultad.}
+\ph{[Árbol de utilidad.]}
+
+\subsection{ASR prioritarios}
+\hint{Entre 5 y 7. Si todos vienen de escenarios, expliquen en una línea por qué ninguna función, restricción, objetivo o condición del equipo obliga a estructurar el sistema.}
+\noindent\begin{tabularx}{\linewidth}{|p{1.7cm}|Y|Y|Y|}\hline
+  \headrow\hd{ASR} & \hd{Qué debe cumplir la arquitectura} & \hd{Procedencia} & \hd{Viene de}\\\hline
+  ASR-01 & \ph{[Enunciado]} & \ph{[Función / Escenario / Restricción / Objetivo de negocio / Condición organizacional]} & \ph{[QAS-\_\_, CU-\_\_ o nombre de la restricción]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+% =====================================================================
+% 3. Decisiones
+% =====================================================================
+\section{Decisiones\bluebadge{Primera entrega · 4 a 6 ADR}}
+\hint{Una ficha por decisión esencial. Cada decisión compara al menos dos alternativas reales. Una decisión que cambia no se borra: se marca como sustituida y la nueva la menciona.}
+
+\subsection{Índice de decisiones}
+\noindent\begin{tabularx}{\linewidth}{|p{1.9cm}|Y|Y|p{3.2cm}|}\hline
+  \headrow\hd{ADR} & \hd{Decisión} & \hd{Estado} & \hd{ASR que atiende}\\\hline
+  ADR-001 & \ph{[Título en forma de decisión]} & \ph{[Propuesto / Aceptado / Rechazado / Sustituido por ADR-\_\_]} & \ph{[ASR-\_\_]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+\subsection{Fichas de decisión}
+\begin{ficha}{ADR-\_\_\_ · \ph{[título en forma de decisión]}}
+  \frow{Estado}{\ph{[Propuesto / Aceptado / Rechazado / Sustituido por ADR-\_\_]}}
+  \frow{Contexto}{\ph{[Qué obliga a decidir y qué ASR están en juego]}}
+  \frow{Alternativas}{\ph{[A. … A favor: … En contra: …]}\newline\ph{[B. … A favor: … En contra: …]}}
+  \frow{Criterios}{\ph{[Con qué se compararon, a partir de los ASR]}}
+  \frow{Decisión}{\ph{[Qué se eligió y, si aplica, qué táctica o patrón usa]}}
+  \frow{Consecuencias}{\ph{[Qué se gana y qué se paga]}}
+  \frow{Riesgos}{\ph{[R-\_\_]}}
+  \frow{Elementos afectados}{\ph{[C-\_\_]}}
+\end{ficha}
+
+% =====================================================================
+% 4. Estructura
+% =====================================================================
+\section{Estructura\bluebadge{Primera entrega inicia}\greenbadge{Entrega final completa}}
+\hint{Describan los elementos y sus reglas con texto y tablas. Los diagramas van en la sección 6 y usan estos mismos identificadores.}
+
+\subsection{Módulos y componentes}
+\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{3.6cm}|Y|Y|}\hline
+  \headrow\hd{ID} & \hd{Nombre y tipo} & \hd{Responsabilidad} & \hd{Provee / requiere}\\\hline
+  C-01 & \ph{[Nombre · módulo o componente]} & \ph{[Una frase]} & \ph{[Interfaces]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+\hint{Lo repetitivo se resuelve por convención: escriban la convención una vez, debajo de la tabla.}
+
+\subsection{Interfaces críticas}
+\hint{Sólo las interfaces cuyo incumplimiento produce un riesgo real: dinero, estado compartido, datos personales…}
+\noindent\begin{tabularx}{\linewidth}{|p{2.6cm}|p{2.8cm}|p{2.9cm}|Y|}\hline
+  \headrow\hd{Interfaz} & \hd{Provista por / usada por} & \hd{Operaciones} & \hd{Contrato: condiciones de entrada, resultado garantizado y errores relevantes}\\\hline
+  \ph{[Nombre]} & \ph{[C-\_\_ / C-\_\_]} & \ph{[…]} & \ph{[…]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+\subsection{Reglas de dependencia}
+\noindent\begin{tabularx}{\linewidth}{|Y|p{3.2cm}|p{3.2cm}|}\hline
+  \headrow\hd{Regla} & \hd{Permitida o prohibida} & \hd{Por qué (ADR)}\\\hline
+  \ph{[…]} & \ph{[…]} & \ph{[ADR-\_\_]}\\\hline
+  & & \\\hline
+\end{tabularx}
+
+% =====================================================================
+% 5. Arquitectura en ejecución
+% =====================================================================
+\section{Arquitectura en ejecución\greenbadge{Entrega final}}
+\hint{Cada preocupación tiene una decisión, o un «no aplica» con su razón. No es una lista de tecnologías: toda tecnología mencionada se conecta con un ADR o un ASR.}
+\noindent\begin{tabularx}{\linewidth}{|p{3.4cm}|Y|p{2.4cm}|p{2.6cm}|}\hline
+  \headrow\hd{Preocupación} & \hd{Decisión, o «no aplica porque…»} & \hd{ADR / ASR} & \hd{Vista o evidencia}\\\hline
+  \small\bfseries Distribución y comunicación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Datos, estado y propiedad & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Concurrencia y coordinación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Resiliencia y disponibilidad & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Seguridad y límites de confianza & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Despliegue y entornos & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Observabilidad y operación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+  \small\bfseries Costo operacional & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
+\end{tabularx}
+
+% =====================================================================
+% 6. Vistas
+% =====================================================================
+\section{Vistas\bluebadge{Primera entrega: V-01 y V-02}\greenbadge{Entrega final completa}}
+\hint{Una vista existe para responder a una audiencia concreta. Usen la notación que mejor sirva a ese propósito; en el curso se practican UML y C4.}
+
+\subsection{Tipos de vista que usaremos}
+\hint{En ISO 42010 estos tipos se llaman viewpoints. No tienen que inventarlos: elijan los que necesiten. Agreguen otro sólo si una preocupación importante queda sin atender.}
+\noindent\begin{tabularx}{\linewidth}{|p{2.6cm}|Y|Y|}\hline
+  \headrow\hd{Tipo de vista} & \hd{Qué preocupaciones atiende} & \hd{Representaciones útiles}\\\hline
+  \small\bfseries Contexto & \small Frontera del sistema, usuarios y sistemas externos & \small Diagrama de contexto; C4 nivel 1\\\hline
+  \small\bfseries Estructura & \small Módulos, componentes, interfaces y dependencias & \small UML de componentes o de paquetes; C4 niveles 2 y 3\\\hline
+  \small\bfseries Ejecución & \small Interacciones, estado compartido, concurrencia y fallas & \small UML de secuencia, de actividad o máquina de estados\\\hline
+  \small\bfseries Despliegue & \small Nodos, comunicación, límites de confianza y redundancia & \small UML de despliegue\\\hline
+\end{tabularx}
+
+\subsection{Vistas}
+\hint{Copien la ficha para cada vista y coloquen el diagrama justo debajo. Declaren al menos una correspondencia con otra vista: qué debe coincidir entre ambas.}
+\begin{ficha}{V-\_\_ · \ph{[nombre de la vista]}}
+  \frow{Tipo de vista}{\ph{[Contexto / Estructura / Ejecución / Despliegue]}}
+  \frow{Para quién y para qué}{\ph{[Audiencia y lo que la vista le permite entender o decidir]}}
+  \frow{Preocupaciones que atiende}{\ph{[…]}}
+  \frow{Notación y leyenda}{\ph{[UML, C4, tabla…; qué significa cada símbolo si no es obvio]}}
+  \frow{Se corresponde con}{\ph{[V-\_\_: qué debe coincidir entre ambas]}}
+\end{ficha}
+\begin{center}\ph{[Diagrama]}\end{center}
+
+% =====================================================================
+% 7. Evaluación, trazabilidad y transición
+% =====================================================================
+\section{Evaluación, trazabilidad y transición\bluebadge{Primera entrega: sólo 7.3}\greenbadge{Entrega final}}
+\hint{Muestren con evidencia qué tan bien responde la arquitectura a sus ASR, qué queda pendiente y qué necesita saber quien la construya.}
+
+\subsection{Evaluación y trazabilidad de los ASR\greenbadge{Entrega final}}
+\hint{Una fila por ASR. Esta tabla es la matriz de trazabilidad: no la repitan en otro lugar. En «Resultado» no escriban sólo «cumple»: digan qué mostró la evidencia.}
+\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{1.6cm}|p{1.7cm}|p{1.3cm}|p{1.7cm}|Y|p{1.6cm}|}\hline
+  \headrow\hd{ASR} & \hd{ADR} & \hd{Elementos} & \hd{Vista} & \hd{Evidencia} & \hd{Resultado} & \hd{Riesgo residual}\\\hline
+  \small ASR-01 & \ph{\small[ADR-\_\_]} & \ph{\small[C-\_\_]} & \ph{\small[V-\_\_]} & \ph{\small[EV-\_\_]} & \ph{\small[Qué mostró la evidencia]} & \ph{\small[R-\_\_]}\\\hline
+  & & & & & & \\\hline
+\end{tabularx}
+
+\subsection{Evidencias\greenbadge{Entrega final}}
+\hint{Registren aquí cada EV que citen. Una evidencia puede ser una revisión por escenario, una medición, una prueba o un análisis. Es obligatorio incluir al menos una verificación empírica ejecutada y una comprobación de conformidad.}
+\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.6cm}|Y|p{3.2cm}|}\hline
+  \headrow\hd{EV} & \hd{Tipo} & \hd{Qué se hizo y qué resultó} & \hd{Archivo o referencia}\\\hline
+  EV-01 & \ph{[Revisión / Medición / Prueba / Análisis]} & \ph{[…]} & \ph{[evidencia/…]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+\begin{ficha}{Verificación empírica · EV-\_\_}
+  \frow{Afirmación que se pone a prueba}{\ph{[Qué esperan de la arquitectura]}}
+  \frow{Cómo se probó}{\ph{[Prototipo pequeño (spike), medición o prueba; condiciones]}}
+  \frow{Resultado}{\ph{[Qué se observó, con números]}}
+  \frow{Qué cambia en la arquitectura}{\ph{[Se confirma, se matiza o se refuta; ajuste realizado]}}
+\end{ficha}
+
+\begin{callout}
+  {\small\bfseries\color{SADBlue}No necesitan construir el sistema completo:} {\small un prototipo pequeño basta si pone a prueba la afirmación.}
+\end{callout}
+
+\begin{ficha}{Comprobación de conformidad · EV-\_\_}
+  \frow{Decisión que protege}{\ph{[ADR-\_\_ o regla de dependencia]}}
+  \frow{Procedimiento}{\ph{[Pasos que otra persona puede repetir. Automatizarlo es deseable, no obligatorio]}}
+  \frow{Resultado esperado}{\ph{[Cuándo se considera que la regla se violó]}}
+\end{ficha}
+
+\subsection{Riesgos y pendientes\bluebadge{Primera entrega inicia}}
+\hint{Se inicia en la primera entrega y se mantiene hasta la entrega final.}
+\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.8cm}|Y|Y|}\hline
+  \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
+  R-01 & \ph{[Riesgo / Deuda / Decisión abierta / Pendiente]} & \ph{[…]} & \ph{[…]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+\subsection{Transición a Construcción\greenbadge{Entrega final}}
+\hint{Instrucciones accionables para quien implemente: decisiones que no deben romperse, interfaces críticas, comprobaciones que deben ejecutarse y orden sugerido de trabajo. Si ya hay código, registren las diferencias con el diseño; si no, cómo se comprobarán.}
+\ph{[Guía breve.]}
+
+\medskip
+\noindent\begin{tabularx}{\linewidth}{|p{2.8cm}|Y|Y|Y|}\hline
+  \headrow\hd{Elemento o ADR} & \hd{Qué dice el diseño} & \hd{Qué hay en el código, o cómo se comprobará} & \hd{Qué se hará}\\\hline
+  \ph{[ADR-\_\_ / C-\_\_]} & \ph{[…]} & \ph{[…]} & \ph{[…]}\\\hline
+  & & & \\\hline
+\end{tabularx}
+
+% =====================================================================
+% Anexos
+% =====================================================================
+\section*{Anexos}
+\hint{Opcionales y sólo para material extenso. Una decisión nueva no puede aparecer únicamente en un anexo.}
+
+\newpage
+
+% =====================================================================
+% Checklists
+% =====================================================================
+\section*{Lista de comprobación · Primera entrega}
+\begin{itemize}[label={},leftmargin=0pt,itemsep=1pt]
+  \checkitem{Contexto, interesados con sus preocupaciones y funciones clave identificados.}
+  \checkitem{Restricciones, supuestos, objetivos y condiciones separados por tipo.}
+  \checkitem{Entre 8 y 12 escenarios medibles; al menos uno de seguridad con activo, actor de amenaza y límite de confianza.}
+  \checkitem{Árbol de utilidad priorizado por importancia y dificultad.}
+  \checkitem{Entre 5 y 7 ASR, cada uno con su procedencia.}
+  \checkitem{Entre 4 y 6 ADR con estado; cada uno compara al menos dos alternativas reales.}
+  \checkitem{Elementos principales en 4.1 y vistas V-01 (contexto) y V-02 (estructura).}
+  \checkitem{Riesgos y pendientes iniciados en 7.3; declaración de IA actualizada.}
+\end{itemize}
+
+\section*{Lista de comprobación · Entrega final}
+\begin{itemize}[label={},leftmargin=0pt,itemsep=1pt]
+  \checkitem{Las siete secciones están presentes y no hay relleno sin propósito.}
+  \checkitem{Interfaces críticas con contrato y reglas de dependencia declaradas.}
+  \checkitem{Cada preocupación de ejecución tiene una decisión o un «no aplica» justificado.}
+  \checkitem{Cada vista declara audiencia, propósito y al menos una correspondencia.}
+  \checkitem{La tabla 7.1 permite seguir cada ASR hasta su evidencia y su riesgo residual.}
+  \checkitem{Hay al menos una verificación empírica ejecutada y una comprobación de conformidad repetible.}
+  \checkitem{Hay diferencias registradas con el código, o un plan para comprobarlas, y una guía de transición.}
+  \checkitem{Ambos integrantes pueden explicar cualquier decisión del documento.}
+\end{itemize}
+
+\medskip
+\begin{callout}
+  {\small\bfseries\color{SADBlue}Entrega.} {\small El paquete se arma conforme al Manual vigente. El PDF de este documento es la versión que se califica.}
+\end{callout}
+
+\end{document}
