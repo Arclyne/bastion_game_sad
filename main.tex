@@ -6,7 +6,7 @@
 \usepackage{lmodern}
 \usepackage[margin=2.2cm,top=2.4cm,bottom=2.2cm,headheight=14pt]{geometry}
 \usepackage[dvipsnames,table]{xcolor}
-\usepackage{array,tabularx,booktabs,multirow}
+\usepackage{array,tabularx,booktabs,multirow,xltabular}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
@@ -66,6 +66,7 @@
 \newcommand{\hd}[1]{\textbf{\small #1}}
 \newcommand{\headrow}{\rowcolor{SADHead}}
 \AtBeginEnvironment{tabularx}{\small}
+\AtBeginEnvironment{xltabular}{\small}
 
 % Callout box
 \newtcolorbox{callout}[1][]{enhanced,breakable,colback=SADNote,colframe=SADNote,boxrule=0pt,
@@ -196,15 +197,31 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 
 \subsection{Interesados y preocupaciones}
 \hint{Incluyan sólo a quienes tienen una preocupación que puede cambiar la arquitectura. Una preocupación es lo que le importa a alguien, no una función del sistema.}
-\noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
+\begin{xltabular}{\linewidth}{|>{\raggedright\arraybackslash}p{4.2cm}|Y|}\hline
   \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
-  Jugador (cuenta registrada) & Que nadie pueda hacer trampa con un cliente modificado; que una jugada se vea en el tablero del rival casi al instante; no perder una partida por un corte breve de red; no perder monedas ni objetos por una falla a mitad de una compra.\\\hline
-  Invitado & Poder jugar sin registrarse y conservar su progreso si después vincula la cuenta (CU-06, CU-07).\\\hline
-  Espectador (con o sin cuenta) & Ver partidas sin poder soplar jugadas ni molestar a los participantes (CU-34).\\\hline
-  Moderador y administrador & Que las sanciones surtan efecto de inmediato y que las bitácoras no puedan alterarse ni borrarse (CU-44, CU-48).\\\hline
-  Equipo de desarrollo (dos integrantes, uno en macOS arm64 y otro en Windows) & Compilar, ejecutar y probar todo en ambos sistemas; trabajar en paralelo sin pisarse; poder probar las reglas del servidor sin base de datos ni red.\\\hline
-  Profesor de la experiencia educativa & Que se respeten las tecnologías permitidas por el curso (sin stack web, WebSockets, SignalR, gRPC ni REST) y que cada decisión esté justificada y trazada hasta su evidencia.\\\hline
-\end{tabularx}
+  \endfirsthead
+  \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
+  \endhead
+  STK-01 · Jugador (8 años o más) & \textbf{Interés:} Reglas fáciles de aprender, controles accesibles, partidas fluidas y profundidad estratégica suficiente.\newline CRN-01: Entender al momento por qué una jugada no es válida, sin leer un párrafo.\newline CRN-02: Que el juego responda en menos de un segundo al colocar una barrera.\newline CRN-03: Que el juego siga interesando sin que aprender cueste más de unos minutos.\newline CRN-06: Saber qué pasa si se corta la conexión a mitad de partida: volver, perder o dejar esperando al rival.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\\\hline
+  STK-02 · Padre o tutor & \textbf{Interés:} Contenido seguro, protección del menor y control sobre lo que hace su hijo.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-05: Entregar solo los datos imprescindibles del menor y saber qué se guarda y para qué.\\\hline
+  STK-03 · Profesor o cliente & \textbf{Interés:} Cumplimiento de objetivos y entrega puntual.\newline CRN-07: Saber si lo comprometido cabe en las 14 semanas y qué se recorta primero.\newline CRN-08: Ver cada semana algo que funcione y se pueda probar.\\\hline
+  STK-04 · Director del proyecto & \textbf{Interés:} Cumplimiento de alcance, presupuesto y calendario.\newline CRN-07: Saber si lo comprometido cabe en las 14 semanas y qué se recorta primero.\newline CRN-14: Avanzar sin que la decisión sobre IA, conexión LAN o nombre del juego obligue a rehacer trabajo.\\\hline
+  STK-05 · Arquitecto de software & \textbf{Interés:} Estructura coherente, modificabilidad y decisiones justificadas.\newline CRN-09: Poder justificar cada decisión estructural y señalar dónde y por qué se tomó.\newline CRN-10: Decidir quién manda sobre el estado de la partida, el cliente o el servidor.\newline CRN-11: Definir el protocolo sobre TCP sin WebSockets: delimitación de mensajes, serialización y versiones distintas de cliente y servidor.\newline CRN-12: Que cliente y servidor apliquen exactamente las mismas reglas.\newline CRN-20: Añadir LAN sin rehacer el núcleo, con el extremo de red configurable desde fuera.\newline CRN-26: Dejar el segundo factor detrás de una interfaz para cambiar de mecanismo sin tocar el inicio de sesión.\\\hline
+  STK-06 · Diseñador del videojuego & \textbf{Interés:} Mecánicas originales y equilibradas.\newline CRN-03: Que el juego siga interesando sin que aprender cueste más de unos minutos.\newline CRN-13: Cambiar el tamaño del tablero y el número de barreras sin recompilar.\\\hline
+  STK-07 · Programadores & \textbf{Interés:} Requisitos claros, recursos y tiempo suficientes.\newline CRN-11: Definir el protocolo sobre TCP sin WebSockets: delimitación de mensajes, serialización y versiones distintas de cliente y servidor.\newline CRN-14: Avanzar sin que la decisión sobre IA, conexión LAN o nombre del juego obligue a rehacer trabajo.\\\hline
+  STK-08 · Equipo de arte, interfaz y sonido & \textbf{Interés:} Identidad visual y sonora propia e interfaz fácil de usar.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\\\hline
+  STK-09 · Diseñador de experiencia de usuario & \textbf{Interés:} Facilidad de aprendizaje y buena experiencia de uso.\newline CRN-01: Entender al momento por qué una jugada no es válida, sin leer un párrafo.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\\\hline
+  STK-10 · Equipo de pruebas (QA) & \textbf{Interés:} Estabilidad, ausencia de errores y equilibrio.\newline CRN-12: Que cliente y servidor apliquen exactamente las mismas reglas.\newline CRN-17: Ejecutar y repetir partidas completas sin pasar por la interfaz.\newline CRN-23: Que un cliente modificado no pueda hacer jugadas ilegales ni ver información oculta del rival.\\\hline
+  STK-11 · Equipo de localización & \textbf{Interés:} Traducciones claras y culturalmente apropiadas.\newline CRN-15: Que la interfaz no se descuadre al traducir textos de distinta longitud.\newline CRN-16: Traducir textos, fechas, números y formatos sin tocar el código.\\\hline
+  STK-12 · Equipo de soporte y moderación (condicionado a Q-06) & \textbf{Interés:} Atender reportes y sancionar conductas inapropiadas.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\\\hline
+  STK-13 · Administrador de base de datos & \textbf{Interés:} Integridad, disponibilidad y recuperación de los datos.\newline CRN-19: Recuperar cuentas, progreso y partidas tras una caída, y definir qué información es aceptable perder.\newline CRN-21: Saber qué hace el sistema si el correo o un servicio externo deja de responder, sin quedarse colgado.\\\hline
+  STK-14 · Equipo de operaciones y despliegue & \textbf{Interés:} Que el sistema sea desplegable y esté disponible.\newline CRN-06: Saber qué pasa si se corta la conexión a mitad de partida: volver, perder o dejar esperando al rival.\newline CRN-20: Añadir LAN sin rehacer el núcleo, con el extremo de red configurable desde fuera.\newline CRN-21: Saber qué hace el sistema si el correo o un servicio externo deja de responder, sin quedarse colgado.\\\hline
+  STK-15 · Especialista en ciberseguridad & \textbf{Interés:} Seguridad de las cuentas y prevención de trampas.\newline CRN-10: Decidir quién manda sobre el estado de la partida, el cliente o el servidor.\newline CRN-18: No ser sancionado por reportes de mala fe sin que nadie revise lo ocurrido.\newline CRN-22: Que el tráfico TCP en claro permita leer credenciales y secuestrar sesiones.\newline CRN-23: Que un cliente modificado no pueda hacer jugadas ilegales ni ver información oculta del rival.\newline CRN-26: Dejar el segundo factor detrás de una interfaz para cambiar de mecanismo sin tocar el inicio de sesión.\\\hline
+  STK-16 · Auditor del proyecto & \textbf{Interés:} Trazabilidad y evidencia verificable cada semana.\newline CRN-08: Ver cada semana algo que funcione y se pueda probar.\newline CRN-09: Poder justificar cada decisión estructural y señalar dónde y por qué se tomó.\\\hline
+  STK-17 · Asesor legal y de propiedad intelectual & \textbf{Interés:} Uso legal de nombres, diseños, reglas y recursos.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-05: Entregar solo los datos imprescindibles del menor y saber qué se guarda y para qué.\newline CRN-24: Saber hasta dónde puede parecerse el juego a Quoridor sin infringir derechos de terceros.\\\hline
+  STK-18 · Gigamic y Mirko Marchesi & \textbf{Interés:} Protección de su marca y propiedad intelectual.\newline CRN-24: Saber hasta dónde puede parecerse el juego a Quoridor sin infringir derechos de terceros.\\\hline
+  STK-19 · Plataformas de distribución (restricción legal) & \textbf{Interés:} Cumplimiento de normas técnicas, legales y de contenido.\newline CRN-04: Que en el chat no haya insultos ni desconocidos que hablen con el menor.\newline CRN-25: Exigir clasificación por edad, empaquetado conforme y una política de chat que cumpla la regulación de cada región.\\\hline
+\end{xltabular}
 
 \subsection{Funciones clave}
 \hint{Usen los casos de uso o las historias de usuario que ya tienen, con sus identificadores. Señalen cuáles obligan a tomar decisiones arquitectónicas. Las demás pueden seguir la estructura general del sistema y documentarse sólo cuando sea necesario.}
