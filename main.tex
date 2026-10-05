@@ -405,20 +405,79 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \subsection{Índice de decisiones}
 \noindent\begin{tabularx}{\linewidth}{|p{1.9cm}|Y|Y|p{3.2cm}|}\hline
   \headrow\hd{ADR} & \hd{Decisión} & \hd{Estado} & \hd{ASR que atiende}\\\hline
-  ADR-001 & \ph{[Título en forma de decisión]} & \ph{[Propuesto / Aceptado / Rechazado / Sustituido por ADR-\_\_]} & \ph{[ASR-\_\_]}\\\hline
-  & & & \\\hline
+  ADR-001 & Organizar el sistema en capas cliente-servidor con el servidor como única autoridad & Aceptado & ASR-01, ASR-05, ASR-06\\\hline
+  ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado (confirmar con el profesor, R-01) & ASR-02, ASR-03\\\hline
+  ADR-003 & Construir el cliente con MonoGame DesktopGL & Aceptado & ASR-03\\\hline
+  ADR-004 & Usar \texttt{SecurityMode.None} y concentrar la seguridad en el servidor & Aceptado & ASR-04, ASR-03\\\hline
+  ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado (confirmar con el profesor, R-01) & ASR-04, ASR-05, ASR-03\\\hline
+  ADR-006 & Traducir en el cliente los resultados codificados del servidor & Aceptado & ASR-07\\\hline
 \end{tabularx}
 
 \subsection{Fichas de decisión}
-\begin{ficha}{ADR-\_\_\_ · \ph{[título en forma de decisión]}}
-  \frow{Estado}{\ph{[Propuesto / Aceptado / Rechazado / Sustituido por ADR-\_\_]}}
-  \frow{Contexto}{\ph{[Qué obliga a decidir y qué ASR están en juego]}}
-  \frow{Alternativas}{\ph{[A. … A favor: … En contra: …]}\newline\ph{[B. … A favor: … En contra: …]}}
-  \frow{Criterios}{\ph{[Con qué se compararon, a partir de los ASR]}}
-  \frow{Decisión}{\ph{[Qué se eligió y, si aplica, qué táctica o patrón usa]}}
-  \frow{Consecuencias}{\ph{[Qué se gana y qué se paga]}}
-  \frow{Riesgos}{\ph{[R-\_\_]}}
-  \frow{Elementos afectados}{\ph{[C-\_\_]}}
+\begin{ficha}{ADR-001 · Organizar el sistema en capas cliente-servidor con el servidor como única autoridad}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{Un cliente modificado no debe poder hacer trampa (QAS-01), la economía no admite cobros dobles (QAS-07), el cierre de partida debe ser atómico (QAS-06) y el equipo necesita probar las reglas sin infraestructura (QAS-10). Están en juego ASR-01, ASR-05 y ASR-06.}
+  \frow{Alternativas}{A. Cliente-servidor en capas con servidor autoritativo: el cliente envía intenciones; el servidor valida con un dominio sin dependencias y guarda a través de repositorios. A favor: un solo lugar decide; el dominio se prueba solo y la IA lo reutiliza; solo el servidor toca la base. En contra: cada jugada cuesta un viaje de ida y vuelta; el servidor es punto único de falla (R-05).\newline B. Igual a igual, con el cliente de un jugador como anfitrión de la partida. A favor: sin servidor para jugar; menor latencia para el anfitrión. En contra: el anfitrión puede hacer trampa, lo que invalida el ranking; el elo y las monedas igual necesitan un servidor central.\newline C. Reglas en el cliente y servidor como simple relé y almacén. A favor: respuesta inmediata; servidor más sencillo. En contra: un cliente modificado decide el resultado; contradice CU-20 RN-01 y CU-38 RN-03.}
+  \frow{Criterios}{Integridad frente a clientes modificados (ASR-01), atomicidad de lo que se guarda (ASR-05), capacidad de prueba y reutilización de reglas (ASR-06), esfuerzo para dos personas.}
+  \frow{Decisión}{A. Patrón cliente-servidor con arquitectura en capas: cliente (presentación) → contratos; host → servicios → dominio; servicios → acceso a datos → base de datos. Patrón repositorio (\texttt{IXRepository}) entre servicios y datos. El cliente recibe el estado por callbacks y lo calcula solo para dar respuesta inmediata, nunca para decidir.}
+  \frow{Consecuencias}{Se gana un único punto de verdad, pruebas del dominio y de los servicios con dobles, y reglas de dependencia comprobables. Se paga la latencia de ida y vuelta en cada jugada (QAS-03) y la dependencia de un único servidor.}
+  \frow{Riesgos}{R-05, R-06}
+  \frow{Elementos afectados}{C-01, C-02, C-03, C-04, C-05, C-06}
+\end{ficha}
+
+\begin{ficha}{ADR-002 · Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas}
+  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
+  \frow{Contexto}{El curso exige WCF y prohíbe stack web, WebSockets, SignalR, gRPC y REST. El servidor debe avisar sin que se le pregunte (jugadas, chat, emparejamiento, espectadores: QAS-03, QAS-12) y el servidor debe correr en macOS y en Windows (QAS-08). Están en juego ASR-02 y ASR-03.}
+  \frow{Alternativas}{A. CoreWCF 1.9 sobre .NET 10, \texttt{NetTcpBinding} dúplex, contratos en una biblioteca netstandard2.0 y cliente con \texttt{System.ServiceModel}. A favor: corre en ambos sistemas; callbacks en el mismo canal; contratos compartidos. En contra: CoreWCF no implementa todo WCF; usa reflexión, por lo que no se puede recortar ni compilar AOT.\newline B. WCF clásico sobre .NET Framework 4.8. A favor: es lo que se ve en clase; implementación completa. En contra: solo Windows, de modo que el servidor viviría en una sola máquina del equipo (punto único de falla para el desarrollo) y el integrante de macOS no podría ejecutarlo.\newline C. CoreWCF de petición-respuesta con sondeo periódico del cliente. A favor: contratos más simples, sin callbacks. En contra: la latencia depende del intervalo de sondeo (incumple QAS-03 si es largo, sobrecarga el servidor si es corto); 200 espectadores sondeando multiplican la carga (QAS-12).}
+  \frow{Criterios}{Tecnologías permitidas, notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), latencia y carga.}
+  \frow{Decisión}{A. Contratos de servicio y de callback en \texttt{Bastion.Contracts} (netstandard2.0), operaciones asíncronas en el cliente y difusión por callbacks en el servidor. \texttt{PublishTrimmed} y \texttt{PublishAot} quedan desactivados en \texttt{Directory.Build.props}.}
+  \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26) y la dependencia de que el profesor acepte CoreWCF como WCF.}
+  \frow{Riesgos}{R-01, R-06, R-09}
+  \frow{Elementos afectados}{C-01, C-02, C-03, C-04}
+\end{ficha}
+
+\begin{ficha}{ADR-003 · Construir el cliente con MonoGame DesktopGL}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{El cliente es un juego de escritorio que debe correr en macOS arm64 y en Windows (ASR-03, QAS-08), dibujar el tablero y las pantallas, y ser código C\# que el equipo escribe y que se evalúa.}
+  \frow{Alternativas}{A. MonoGame DesktopGL 3.8.5. A favor: biblioteca de código, corre en macOS y Windows con OpenGL; todo lo hace el código C\# del equipo. En contra: no trae controles de interfaz, por lo que el equipo construye los suyos.\newline B. Godot con C\#. A favor: editor de escenas y controles de interfaz listos. En contra: buena parte del trabajo se hace en su editor y no en código, que es lo evaluado.\newline C. Unity. A favor: motor completo y documentación amplia. En contra: sobredimensionado para un tablero 2D; proyecto pesado de versionar entre dos personas.\newline D. Stride. A favor: motor C\# de código abierto. En contra: su editor solo funciona en Windows.\newline E. Avalonia. A favor: interfaz de escritorio multiplataforma en C\#. En contra: no es un motor de juego: sin bucle de juego ni animación del tablero.\newline F. MonoGame WindowsDX. A favor: DirectX nativo. En contra: solo Windows.}
+  \frow{Criterios}{Multiplataforma (ASR-03), que el trabajo esté en código evaluable, peso del proyecto y curva de aprendizaje.}
+  \frow{Decisión}{A. El cliente es \texttt{Bastion.Client} con MonoGame DesktopGL, un conjunto propio de controles y pantallas, y un navegador de pantallas.}
+  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-03).}
+  \frow{Riesgos}{R-03}
+  \frow{Elementos afectados}{C-01}
+\end{ficha}
+
+\begin{ficha}{ADR-004 · Usar SecurityMode.None y concentrar la seguridad en el servidor}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{La seguridad por omisión de net.tcp usa autenticación de Windows, que no funciona desde macOS (ASR-03). Aun así hay que proteger credenciales y partidas (QAS-01, QAS-02, ASR-04).}
+  \frow{Alternativas}{A. \texttt{SecurityMode.None} compensado en el servidor: validación de todo, contraseñas PBKDF2-SHA512 con 210\,000 iteraciones y sal por cuenta, comparación en tiempo constante, mismo resultado ante cualquier fallo, bloqueo escalonado, token de sesión del que solo se guarda su SHA-256, bitácora de accesos y base accesible solo con un usuario sin \texttt{DELETE}. A favor: funciona entre Mac y Windows; protege lo que se guarda. En contra: lo que viaja por la red va en claro.\newline B. Seguridad de transporte con autenticación de Windows (por omisión). A favor: cifrado sin configuración en Windows. En contra: no funciona desde macOS.\newline C. Seguridad de transporte con certificado TLS. A favor: cifra el canal. En contra: hay que emitir y distribuir certificados a cada cliente y no se ha comprobado que el cliente de .NET en macOS lo soporte con CoreWCF.}
+  \frow{Criterios}{Funcionar entre ambos sistemas (ASR-03), proteger credenciales y estado (ASR-04), esfuerzo de despliegue.}
+  \frow{Decisión}{A, con el supuesto de una red de confianza (sección 2.4). La alternativa C queda como mejora si el supuesto resulta falso.}
+  \frow{Consecuencias}{Se gana un sistema que funciona en ambos sistemas y que no guarda secretos en claro. Se paga que un atacante en la misma red puede leer contraseñas y tokens en tránsito.}
+  \frow{Riesgos}{R-02}
+  \frow{Elementos afectados}{C-02, C-03, C-04, C-06, C-07}
+\end{ficha}
+
+\begin{ficha}{ADR-005 · Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL}
+  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
+  \frow{Contexto}{Las operaciones de partida y economía deben ser atómicas (ASR-05), la base debe correr en las dos máquinas (ASR-03) y el servidor debe entrar con mínimo privilegio (ASR-04). Los scripts SQL del modelo de datos ya existen en los requisitos.}
+  \frow{Alternativas}{A. EF Core 10 con el proveedor de SQL Server, sin migraciones: los scripts SQL mandan y el código se ajusta a ellos; SQL Server 2022 en Docker. A favor: transacciones y consultas tipadas; un solo origen del esquema. En contra: hay que mantener a mano la correspondencia entre entidades y tablas.\newline B. EF Core con migraciones. A favor: el esquema se genera desde el código. En contra: dos fuentes de verdad, los scripts y las migraciones, que tarde o temprano divergen.\newline C. ADO.NET con SQL escrito a mano. A favor: control total y lo más cercano a lo visto en clase. En contra: mucho más código repetitivo y propenso a errores de mapeo.\newline D. Azure SQL Edge en Docker para tener imagen ARM en Mac. A favor: nativo en Apple silicon. En contra: Microsoft lo retiró.}
+  \frow{Criterios}{Atomicidad (ASR-05), multiplataforma (ASR-03), un solo origen del esquema, esfuerzo.}
+  \frow{Decisión}{A. \texttt{BastionDbContext} con configuraciones por entidad y repositorios en \texttt{Bastion.Server.Data}; el inicio de sesión \texttt{BastionServerConnection} no tiene permiso \texttt{DELETE}; la cadena de conexión vive en user-secrets o en variables de entorno, nunca en el repositorio. En Mac la imagen x64 corre con Rosetta.}
+  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac, y que el profesor acepte EF Core.}
+  \frow{Riesgos}{R-01, R-04}
+  \frow{Elementos afectados}{C-06, C-07}
+\end{ficha}
+
+\begin{ficha}{ADR-006 · Traducir en el cliente los resultados codificados del servidor}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{El juego se ofrece en en-US y es-MX (QAS-11); todo texto visible debe venir de catálogos de recursos (CU-01 RN-12, D-21) y el servidor no debe conocer el idioma de cada pantalla (ASR-07).}
+  \frow{Alternativas}{A. El servidor devuelve enumeraciones de resultado; el cliente las convierte en una clave \texttt{Pantalla.Elemento} y busca el texto en \texttt{Strings.resx} (en-US, neutral y por omisión) o \texttt{Strings.es-MX.resx}. A favor: el contrato no cambia con el idioma; agregar un idioma solo agrega un archivo. En contra: hay que mantener la correspondencia código–clave.\newline B. El servidor genera el mensaje ya traducido según el idioma de la sesión. A favor: el cliente solo lo muestra. En contra: el texto viaja en el contrato; mezclar presentación en el servidor; el cliente no puede adaptar el mensaje a su pantalla.\newline C. Traducciones guardadas en la base de datos. A favor: se cambian sin recompilar. En contra: D-21 lo descarta; más consultas y más tablas sin necesidad.}
+  \frow{Criterios}{Separación de presentación (ASR-07), contratos estables, esfuerzo para agregar idiomas.}
+  \frow{Decisión}{A. El idioma por omisión es en-US, lo que sustituye el es-MX por omisión previsto en D-21. Los correos, que salen del servidor, usan los recursos del servidor con el idioma preferido de la cuenta (D-21).}
+  \frow{Consecuencias}{Se gana un contrato independiente del idioma y una prueba simple de claves faltantes. Se paga mantener dos archivos de recursos sincronizados.}
+  \frow{Riesgos}{R-08}
+  \frow{Elementos afectados}{C-01, C-02, C-04}
 \end{ficha}
 
 % =====================================================================
