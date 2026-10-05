@@ -233,14 +233,130 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 
 \subsection{Escenarios de calidad y árbol de utilidad}
 \hint{Entre 8 y 12 escenarios medibles; copien la ficha para cada uno. La respuesta dice qué hace el sistema y la medida dice cómo se comprueba. No escriban la solución dentro del escenario.}
-\begin{ficha}{QAS-\_\_ · \ph{[atributo de calidad]} · \ph{[nombre corto]}}
-  \frow{Fuente}{\ph{[Quién o qué provoca el estímulo]}}
-  \frow{Estímulo}{\ph{[Qué ocurre]}}
-  \frow{Entorno}{\ph{[En qué condición está el sistema]}}
-  \frow{Artefacto}{\ph{[Qué parte del sistema se ve afectada]}}
-  \frow{Respuesta}{\ph{[Qué hace el sistema]}}
-  \frow{Medida}{\ph{[Número verificable y cómo se comprueba]}}
-  \frow{Prioridad}{\ph{[(importancia, dificultad) con A, M o B]}}
+\begin{ficha}{QAS-01 · Seguridad · Jugada ilegal desde un cliente modificado}
+  \frow{Fuente}{Un jugador con un cliente modificado o con una herramienta propia que habla net.tcp}
+  \frow{Estímulo}{Envía una jugada ilegal: mover el peón dos casillas sin salto, colocar un muro que encierra al rival, jugar fuera de turno o repetir el número de orden de una jugada ya aplicada}
+  \frow{Entorno}{Partida clasificatoria en curso, operación normal}
+  \frow{Artefacto}{Operaciones de partida del servidor (CU-20, CU-21)}
+  \frow{Respuesta}{El servidor recalcula la jugada sobre su propio estado, la rechaza con un resultado codificado, no cambia el tablero ni el turno y registra el intento}
+  \frow{Medida}{El 100\,\% de los casos de una batería de al menos 30 jugadas ilegales (una por regla de CU-20 y CU-21) se rechaza y el estado guardado queda idéntico; se comprueba con pruebas unitarias de los servicios contra dobles de los repositorios}
+  \frow{Prioridad}{(A, A)}
+  \frow{Activo que se protege}{El estado de la partida y, por él, el elo y las monedas que otorga}
+  \frow{Actor de amenaza}{Jugador autenticado que controla su propio cliente}
+  \frow{Límite de confianza}{La conexión net.tcp entre el cliente y el servidor: nada de lo que llega del cliente se considera válido sin verificarlo}
+\end{ficha}
+
+\begin{ficha}{QAS-02 · Seguridad · Adivinación de contraseñas}
+  \frow{Fuente}{Un atacante que conoce el nickname o el correo de una víctima}
+  \frow{Estímulo}{Prueba contraseñas en serie contra el inicio de sesión}
+  \frow{Entorno}{Operación normal; el canal no tiene seguridad de transporte}
+  \frow{Artefacto}{Servicio de cuentas y tabla de cuentas}
+  \frow{Respuesta}{Responde siempre con el mismo resultado genérico, bloquea la cuenta de forma escalonada y registra cada intento en la bitácora de accesos sin la contraseña recibida}
+  \frow{Medida}{Al tercer fallo consecutivo la cuenta queda bloqueada 5 minutos, al sexto 30 y desde el noveno 60 (CU-01 RN-03); en 100 intentos, la diferencia entre el tiempo medio de respuesta con cuenta inexistente y con contraseña incorrecta es menor a 50 ms; ninguna fila de la base ni línea de bitácora contiene una contraseña en claro. Se comprueba con pruebas unitarias del servicio y una medición sobre el servidor local}
+  \frow{Prioridad}{(A, M)}
+  \frow{Activo que se protege}{Las credenciales de la cuenta y todo lo que posee: elo, monedas y objetos}
+  \frow{Actor de amenaza}{Persona sin la contraseña de la víctima, con un cliente propio y acceso a la red del servidor}
+  \frow{Límite de confianza}{La operación de inicio de sesión del servidor y, detrás de él, la base de datos, a la que solo llega el servidor con un usuario de mínimo privilegio}
+\end{ficha}
+
+\begin{ficha}{QAS-03 · Desempeño · Jugada vista por el rival}
+  \frow{Fuente}{Un jugador}
+  \frow{Estímulo}{Confirma una jugada válida en su turno}
+  \frow{Entorno}{Red local del aula, con 20 partidas simultáneas en el servidor}
+  \frow{Artefacto}{Servicio de partida, base de datos y cliente del rival}
+  \frow{Respuesta}{El servidor valida y guarda la jugada y la notifica a todos los participantes}
+  \frow{Medida}{El percentil 95 del tiempo entre que el servidor recibe la jugada y el cliente del rival la recibe es menor a 500 ms; se mide con marcas de tiempo en las bitácoras de servidor y cliente en una prueba de carga con clientes simulados}
+  \frow{Prioridad}{(A, A)}
+\end{ficha}
+
+\begin{ficha}{QAS-04 · Desempeño · Inicio de sesión}
+  \frow{Fuente}{Un jugador registrado}
+  \frow{Estímulo}{Inicia sesión con credenciales correctas}
+  \frow{Entorno}{Operación normal, sin segundo factor activado}
+  \frow{Artefacto}{Servicio de cuentas}
+  \frow{Respuesta}{Valida las credenciales, abre la sesión y entrega el token}
+  \frow{Medida}{Menos de 1 segundo desde que el jugador pulsa «Iniciar sesión» hasta que ve el menú, sin contar servicios externos (CU-01 RN-11), en el 95\,\% de 50 intentos; se mide con cronómetro en el cliente}
+  \frow{Prioridad}{(M, M)}
+\end{ficha}
+
+\begin{ficha}{QAS-05 · Disponibilidad · Desconexión de un jugador}
+  \frow{Fuente}{La red del jugador o el cierre inesperado de su cliente}
+  \frow{Estímulo}{El jugador pierde la conexión a mitad de una partida}
+  \frow{Entorno}{Partida en curso, el servidor sigue funcionando}
+  \frow{Artefacto}{Partida en curso y cliente del jugador}
+  \frow{Respuesta}{La partida continúa con el reloj corriendo; el rival puede reclamar la victoria a los 60 segundos; si el jugador vuelve, recibe el estado completo y sigue jugando (CU-24, CU-26)}
+  \frow{Medida}{Ninguna jugada guardada se pierde; tras reconectar, el tablero del cliente coincide con el del servidor en menos de 2 segundos; se comprueba desconectando el cable o cerrando el cliente en 10 partidas de prueba}
+  \frow{Prioridad}{(A, A)}
+\end{ficha}
+
+\begin{ficha}{QAS-06 · Confiabilidad · Falla de la base de datos al cerrar una partida}
+  \frow{Fuente}{La base de datos}
+  \frow{Estímulo}{Deja de responder mientras se escriben los resultados de una partida terminada}
+  \frow{Entorno}{Cierre de una partida clasificatoria (CU-25)}
+  \frow{Artefacto}{Servicio de partida y repositorios de partidas, estadísticas y monedas}
+  \frow{Respuesta}{No queda escrito ningún resultado parcial; la partida se marca pendiente de cierre y se reintenta (CU-25 RN-12, RN-13)}
+  \frow{Medida}{Cero partidas con elo aplicado y monedas sin aplicar (o al revés) en 20 fallas provocadas; la partida se cierra en menos de 1 minuto después de que la base vuelve; se comprueba deteniendo el contenedor de SQL Server durante el cierre}
+  \frow{Prioridad}{(A, M)}
+\end{ficha}
+
+\begin{ficha}{QAS-07 · Integridad · Compra con respuesta perdida}
+  \frow{Fuente}{Un jugador}
+  \frow{Estímulo}{Confirma la compra de un objeto o de una caja y la respuesta no llega a su cliente}
+  \frow{Entorno}{Operación normal con pérdida de conexión justo después de enviar}
+  \frow{Artefacto}{Servicio de tienda y movimientos de monedas}
+  \frow{Respuesta}{La compra se aplica una sola vez o ninguna; el cliente consulta el estado en lugar de reenviar (CU-38 RN-08, RN-09)}
+  \frow{Medida}{En 100 compras con la conexión cortada, el saldo de cada cuenta es igual a la suma de sus movimientos y ninguna cuenta tiene un objeto cobrado dos veces; se comprueba con una consulta SQL sobre la base después de la prueba}
+  \frow{Prioridad}{(A, M)}
+\end{ficha}
+
+\begin{ficha}{QAS-08 · Portabilidad · Dos sistemas operativos}
+  \frow{Fuente}{Un integrante del equipo}
+  \frow{Estímulo}{Clona el repositorio en macOS arm64 o en Windows, compila y ejecuta}
+  \frow{Entorno}{Desarrollo, con el SDK de .NET 10 y SQL Server 2022 en Docker}
+  \frow{Artefacto}{Toda la solución}
+  \frow{Respuesta}{Compila, pasa las pruebas y el cliente de un sistema juega una partida completa contra un servidor en el otro}
+  \frow{Medida}{Cero cambios de código o de configuración del repositorio entre sistemas; se comprueba antes de cada entrega con una partida cruzada Mac–Windows en ambos sentidos}
+  \frow{Prioridad}{(A, M)}
+\end{ficha}
+
+\begin{ficha}{QAS-09 · Modificabilidad · Cambio del proveedor de correo}
+  \frow{Fuente}{El equipo}
+  \frow{Estímulo}{Necesita cambiar el servicio de correo o el mecanismo del segundo factor (CU-01 RN-08)}
+  \frow{Entorno}{Desarrollo}
+  \frow{Artefacto}{Servicios de cuentas}
+  \frow{Respuesta}{Se reemplaza la implementación sin tocar los flujos de los casos de uso}
+  \frow{Medida}{El cambio modifica solo una clase de implementación y su registro en la raíz de composición; cero cambios en contratos, en el cliente y en los servicios que la usan; se comprueba con el diff del cambio}
+  \frow{Prioridad}{(B, B)}
+\end{ficha}
+
+\begin{ficha}{QAS-10 · Capacidad de prueba · Reglas sin infraestructura}
+  \frow{Fuente}{Un integrante del equipo}
+  \frow{Estímulo}{Ejecuta las pruebas de las reglas del juego y de los servicios}
+  \frow{Entorno}{Desarrollo, sin base de datos ni servidor en ejecución}
+  \frow{Artefacto}{Reglas del juego y servicios del servidor}
+  \frow{Respuesta}{Las pruebas corren contra el dominio y contra dobles de los repositorios}
+  \frow{Medida}{El 100\,\% de las reglas de negocio de CU-20 y CU-21 tiene al menos una prueba; la suite unitaria completa termina en menos de 30 segundos en cualquiera de las dos máquinas}
+  \frow{Prioridad}{(M, B)}
+\end{ficha}
+
+\begin{ficha}{QAS-11 · Usabilidad · Cambio de idioma}
+  \frow{Fuente}{Un jugador}
+  \frow{Estímulo}{Cambia el idioma de en-US a es-MX}
+  \frow{Entorno}{Operación normal}
+  \frow{Artefacto}{Cliente y resultados del servidor}
+  \frow{Respuesta}{Todas las pantallas y todos los mensajes de error se muestran en el idioma elegido; el chat no se traduce (CU-28 RN-12)}
+  \frow{Medida}{Cero textos visibles fuera de los recursos \texttt{.resx}; cada resultado codificado del servidor tiene clave en ambos idiomas; se comprueba con una prueba que compara las claves de los dos archivos y las de las enumeraciones de resultado}
+  \frow{Prioridad}{(M, B)}
+\end{ficha}
+
+\begin{ficha}{QAS-12 · Escalabilidad · Espectadores de una partida}
+  \frow{Fuente}{Hasta 200 espectadores (CU-34 RN-03)}
+  \frow{Estímulo}{Se conectan a la misma partida}
+  \frow{Entorno}{Partida clasificatoria en curso}
+  \frow{Artefacto}{Servicio de espectadores y servicio de partida}
+  \frow{Respuesta}{Cada espectador recibe las jugadas con el retraso fijo; los jugadores no notan la carga}
+  \frow{Medida}{Retraso de 8 ± 1 segundos para todos los espectadores; el percentil 95 de QAS-03 para los jugadores no empeora más de 10\,\%; se mide con 200 clientes simulados}
+  \frow{Prioridad}{(M, A)}
 \end{ficha}
 
 \begin{callout}
@@ -249,14 +365,35 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 
 \medskip
 \hint{Árbol de utilidad: insértenlo aquí o usen una tabla equivalente. Prioricen por importancia y dificultad.}
-\ph{[Árbol de utilidad.]}
+\noindent\begin{tabularx}{\linewidth}{|p{2.6cm}|Y|p{1.6cm}|p{2cm}|}\hline
+  \headrow\multicolumn{4}{|l|}{\hd{Utilidad de Bastión}}\\\hline
+  \headrow\hd{Atributo} & \hd{Refinamiento} & \hd{Escenario} & \hd{(Imp., Dif.)}\\\hline
+  \multirow{2}{*}{\small\bfseries Seguridad} & Integridad de la partida frente a un cliente modificado & QAS-01 & (A, A)\\\cline{2-4}
+  & Confidencialidad de las credenciales sin seguridad de transporte & QAS-02 & (A, M)\\\hline
+  \multirow{3}{*}{\small\bfseries Desempeño} & Latencia de la jugada hacia el rival & QAS-03 & (A, A)\\\cline{2-4}
+  & Tiempo de inicio de sesión & QAS-04 & (M, M)\\\cline{2-4}
+  & Difusión a espectadores sin afectar a los jugadores & QAS-12 & (M, A)\\\hline
+  \small\bfseries Disponibilidad & Continuidad de la partida ante desconexiones & QAS-05 & (A, A)\\\hline
+  \multirow{2}{*}{\parbox{2.6cm}{\raggedright\small\bfseries Confiabilidad e integridad}} & Atomicidad del cierre de la partida & QAS-06 & (A, M)\\\cline{2-4}
+  & Economía sin cobros dobles & QAS-07 & (A, M)\\\hline
+  \small\bfseries Portabilidad & Mismo código en macOS arm64 y Windows & QAS-08 & (A, M)\\\hline
+  \multirow{2}{*}{\small\bfseries Mantenibilidad} & Sustituir servicios externos & QAS-09 & (B, B)\\\cline{2-4}
+  & Probar reglas sin infraestructura & QAS-10 & (M, B)\\\hline
+  \small\bfseries Usabilidad & Idiomas en-US y es-MX & QAS-11 & (M, B)\\\hline
+\end{tabularx}
+{\small A = alta, M = media, B = baja. Los escenarios (A, A) —QAS-01, QAS-03 y QAS-05— son los que más condicionan la arquitectura.}\par
 
 \subsection{ASR prioritarios}
 \hint{Entre 5 y 7. Si todos vienen de escenarios, expliquen en una línea por qué ninguna función, restricción, objetivo o condición del equipo obliga a estructurar el sistema.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.7cm}|Y|Y|Y|}\hline
   \headrow\hd{ASR} & \hd{Qué debe cumplir la arquitectura} & \hd{Procedencia} & \hd{Viene de}\\\hline
-  ASR-01 & \ph{[Enunciado]} & \ph{[Función / Escenario / Restricción / Objetivo de negocio / Condición organizacional]} & \ph{[QAS-\_\_, CU-\_\_ o nombre de la restricción]}\\\hline
-  & & & \\\hline
+  ASR-01 & El servidor es la única autoridad: toda regla del juego, de la cuenta y de la economía se valida y se decide en el servidor; el cliente solo envía intenciones y muestra el estado que recibe. & Escenario, Función & QAS-01, QAS-07, CU-20, CU-21, CU-38, CU-39\\\hline
+  ASR-02 & El servidor debe poder avisar a los clientes sin que pregunten (jugadas, chat, emparejamiento, espectadores), con llamadas asíncronas y usando solo tecnologías permitidas por el curso. & Escenario, Restricción & QAS-03, QAS-12, CU-17, CU-28, CU-34, restricción de tecnologías del curso\\\hline
+  ASR-03 & Cliente y servidor deben compilarse y ejecutarse sin cambios en macOS arm64 y en Windows. & Restricción, Condición organizacional & QAS-08, restricción multiplataforma, equipo Mac–Windows\\\hline
+  ASR-04 & Sin seguridad de transporte, la seguridad descansa en el servidor: contraseñas con resumen y sal, token de sesión en cada llamada, bloqueo escalonado, bitácoras de solo inserción y acceso a la base con mínimo privilegio. & Escenario, Supuesto & QAS-02, CU-01, CU-44, CU-48, supuesto de red de confianza\\\hline
+  ASR-05 & Toda operación que cambia una partida o la economía se guarda de forma atómica antes de notificarse, para que una falla del cliente, de la red o de la base no deje estados parciales. & Escenario, Función & QAS-05, QAS-06, QAS-07, CU-25, CU-26\\\hline
+  ASR-06 & Las reglas del juego viven aisladas, sin dependencias, y los servicios acceden a los datos a través de interfaces, para probarlas sin infraestructura y para que la IA las reutilice. & Condición organizacional, Escenario, Función & QAS-09, QAS-10, CU-27, equipo de dos personas\\\hline
+  ASR-07 & El servidor devuelve resultados codificados, nunca textos; todo texto visible está en recursos por idioma y el texto se guarda en Unicode. & Función, Escenario & QAS-11, CU-01 RN-12, CU-28 RN-12, D-21\\\hline
 \end{tabularx}
 
 % =====================================================================
