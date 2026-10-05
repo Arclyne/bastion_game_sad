@@ -150,7 +150,7 @@
 
 \textbf{Decisiones esenciales.} CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); MonoGame DesktopGL (ADR-003); \texttt{SecurityMode.None} con la seguridad en el servidor (ADR-004); EF Core y SQL Server 2022 con el esquema en scripts SQL (ADR-005); resultados codificados traducidos en el cliente (ADR-006).
 
-\textbf{Riesgos abiertos.} La confirmación de EF Core por el profesor (R-01), las credenciales en claro en la red (R-02), la presentación del tablero (R-03), SQL Server bajo Rosetta (R-04), el servidor como punto único de falla (R-05) y la latencia aún sin medir (R-06).
+\textbf{Riesgos abiertos.} Las credenciales en claro en la red (R-01), la presentación del tablero (R-02), SQL Server bajo Rosetta (R-03), el servidor como punto único de falla (R-04) y la latencia aún sin medir (R-05).
 
 \subsection{Glosario}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
@@ -232,13 +232,12 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \small Restricción & El lenguaje es C\# sobre .NET; el sistema es una aplicación de escritorio cliente-servidor. & Cambiar de lenguaje o de plataforma invalidaría todas las decisiones tecnológicas.\\\hline
   \small Restricción & El sistema debe compilar y ejecutarse en macOS arm64 y en Windows, porque cada integrante trabaja en uno de ellos. & Si ambos usaran Windows, volverían a ser viables WCF de .NET Framework y MonoGame WindowsDX, pero no cambiaría la estructura en capas.\\\hline
   \small Restricción & La base de datos es SQL Server; los datos se guardan en Unicode con la intercalación \texttt{Modern\_Spanish\_100\_CI\_AS\_SC\_UTF8} (D-21). & Otro motor obligaría a reescribir los scripts y a revisar los índices filtrados que garantizan reglas como la de una sola participación sin terminar.\\\hline
-  \small Supuesto & El profesor acepta EF Core como framework de persistencia en lugar del Entity Framework visto en clase (pendiente de confirmar, R-01). & Habría que cambiar el acceso a datos a otra opción, por ejemplo ADO.NET; los repositorios de C-06 aíslan el cambio del resto del servidor.\\\hline
   \small Supuesto & El juego se usa en una red local o de aula, con decenas de jugadores conectados a la vez y no miles. & Con miles de jugadores, un único servidor con estado en memoria (cola, partidas, espectadores) no bastaría y habría que repartir el estado.\\\hline
-  \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, \texttt{SecurityMode.None} deja expuestas las credenciales y habría que añadir seguridad de transporte (R-02).\\\hline
+  \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, \texttt{SecurityMode.None} deja expuestas las credenciales y habría que añadir seguridad de transporte (R-01).\\\hline
   \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema. & Si el ranking no importara, la validación en el servidor seguiría siendo necesaria para las reglas, pero las transacciones del cierre serían menos críticas.\\\hline
   \small Objetivo de negocio & Que la economía de monedas y cajas sea confiable y transparente: probabilidades visibles y sin dinero real (CU-38 RN-01, CU-39 RN-01). & Introducir dinero real traería obligaciones legales y de seguridad fuera del alcance del curso.\\\hline
   \small Condición organizacional & Equipo de dos personas, una en macOS arm64 y otra en Windows, durante el periodo agosto 2026 – enero 2027, con entregas parciales evaluadas. & Con menos tiempo se recortarían funciones de prioridad baja (cajas, espectadores), no la estructura.\\\hline
-  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-07). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
+  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-06). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
 \end{tabularx}
 
 \subsection{Escenarios de calidad y árbol de utilidad}
@@ -419,7 +418,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado & ASR-02, ASR-03\\\hline
   ADR-003 & Construir el cliente con MonoGame DesktopGL & Aceptado & ASR-03\\\hline
   ADR-004 & Usar \texttt{SecurityMode.None} y concentrar la seguridad en el servidor & Aceptado & ASR-04, ASR-03\\\hline
-  ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado (confirmar con el profesor, R-01) & ASR-04, ASR-05, ASR-03\\\hline
+  ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado & ASR-04, ASR-05, ASR-03\\\hline
   ADR-006 & Traducir en el cliente los resultados codificados del servidor & Aceptado & ASR-07\\\hline
 \end{tabularx}
 
@@ -427,11 +426,11 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \begin{ficha}{ADR-001 · Organizar el sistema en capas cliente-servidor con el servidor como única autoridad}
   \frow{Estado}{Aceptado}
   \frow{Contexto}{Un cliente modificado no debe poder hacer trampa (QAS-01), la economía no admite cobros dobles (QAS-07), el cierre de partida debe ser atómico (QAS-06) y el equipo necesita probar las reglas sin infraestructura (QAS-10). Están en juego ASR-01, ASR-05 y ASR-06.}
-  \frow{Alternativas}{A. Cliente-servidor en capas con servidor autoritativo: el cliente envía intenciones; el servidor valida con un dominio sin dependencias y guarda a través de repositorios. A favor: un solo lugar decide; el dominio se prueba solo y la IA lo reutiliza; solo el servidor toca la base. En contra: cada jugada cuesta un viaje de ida y vuelta; el servidor es punto único de falla (R-05).\newline B. Igual a igual, con el cliente de un jugador como anfitrión de la partida. A favor: sin servidor para jugar; menor latencia para el anfitrión. En contra: el anfitrión puede hacer trampa, lo que invalida el ranking; el elo y las monedas igual necesitan un servidor central.\newline C. Reglas en el cliente y servidor como simple relé y almacén. A favor: respuesta inmediata; servidor más sencillo. En contra: un cliente modificado decide el resultado; contradice CU-20 RN-01 y CU-38 RN-03.}
+  \frow{Alternativas}{A. Cliente-servidor en capas con servidor autoritativo: el cliente envía intenciones; el servidor valida con un dominio sin dependencias y guarda a través de repositorios. A favor: un solo lugar decide; el dominio se prueba solo y la IA lo reutiliza; solo el servidor toca la base. En contra: cada jugada cuesta un viaje de ida y vuelta; el servidor es punto único de falla (R-04).\newline B. Igual a igual, con el cliente de un jugador como anfitrión de la partida. A favor: sin servidor para jugar; menor latencia para el anfitrión. En contra: el anfitrión puede hacer trampa, lo que invalida el ranking; el elo y las monedas igual necesitan un servidor central.\newline C. Reglas en el cliente y servidor como simple relé y almacén. A favor: respuesta inmediata; servidor más sencillo. En contra: un cliente modificado decide el resultado; contradice CU-20 RN-01 y CU-38 RN-03.}
   \frow{Criterios}{Integridad frente a clientes modificados (ASR-01), atomicidad de lo que se guarda (ASR-05), capacidad de prueba y reutilización de reglas (ASR-06), esfuerzo para dos personas.}
   \frow{Decisión}{A. Patrón cliente-servidor con arquitectura en capas: cliente (presentación) → contratos; host → servicios → dominio; servicios → acceso a datos → base de datos. Patrón repositorio (\texttt{IXRepository}) entre servicios y datos. El cliente recibe el estado por callbacks y lo calcula solo para dar respuesta inmediata, nunca para decidir.}
   \frow{Consecuencias}{Se gana un único punto de verdad, pruebas del dominio y de los servicios con dobles, y reglas de dependencia comprobables. Se paga la latencia de ida y vuelta en cada jugada (QAS-03) y la dependencia de un único servidor.}
-  \frow{Riesgos}{R-05, R-06}
+  \frow{Riesgos}{R-04, R-05}
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04, C-05, C-06}
 \end{ficha}
 
@@ -442,7 +441,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Criterios}{Tecnologías permitidas, notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), latencia y carga.}
   \frow{Decisión}{A. Contratos de servicio y de callback en \texttt{Bastion.Contracts} (netstandard2.0), operaciones asíncronas en el cliente y difusión por callbacks en el servidor. \texttt{PublishTrimmed} y \texttt{PublishAot} quedan desactivados en \texttt{Directory.Build.props}.}
   \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26).}
-  \frow{Riesgos}{R-06, R-09}
+  \frow{Riesgos}{R-05, R-08}
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04}
 \end{ficha}
 
@@ -452,8 +451,8 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Alternativas}{A. MonoGame DesktopGL 3.8.5. A favor: biblioteca de código, corre en macOS y Windows con OpenGL; todo lo hace el código C\# del equipo. En contra: no trae controles de interfaz, por lo que el equipo construye los suyos.\newline B. Godot con C\#. A favor: editor de escenas y controles de interfaz listos. En contra: buena parte del trabajo se hace en su editor y no en código, que es lo evaluado.\newline C. Unity. A favor: motor completo y documentación amplia. En contra: sobredimensionado para un tablero 2D; proyecto pesado de versionar entre dos personas.\newline D. Stride. A favor: motor C\# de código abierto. En contra: su editor solo funciona en Windows.\newline E. Avalonia. A favor: interfaz de escritorio multiplataforma en C\#. En contra: no es un motor de juego: sin bucle de juego ni animación del tablero.\newline F. MonoGame WindowsDX. A favor: DirectX nativo. En contra: solo Windows.}
   \frow{Criterios}{Multiplataforma (ASR-03), que el trabajo esté en código evaluable, peso del proyecto y curva de aprendizaje.}
   \frow{Decisión}{A. El cliente es \texttt{Bastion.Client} con MonoGame DesktopGL, un conjunto propio de controles y pantallas, y un navegador de pantallas.}
-  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-03).}
-  \frow{Riesgos}{R-03}
+  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-02).}
+  \frow{Riesgos}{R-02}
   \frow{Elementos afectados}{C-01}
 \end{ficha}
 
@@ -464,18 +463,18 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Criterios}{Funcionar entre ambos sistemas (ASR-03), proteger credenciales y estado (ASR-04), esfuerzo de despliegue.}
   \frow{Decisión}{A, con el supuesto de una red de confianza (sección 2.4). La alternativa C queda como mejora si el supuesto resulta falso.}
   \frow{Consecuencias}{Se gana un sistema que funciona en ambos sistemas y que no guarda secretos en claro. Se paga que un atacante en la misma red puede leer contraseñas y tokens en tránsito.}
-  \frow{Riesgos}{R-02}
+  \frow{Riesgos}{R-01}
   \frow{Elementos afectados}{C-02, C-03, C-04, C-06, C-07}
 \end{ficha}
 
 \begin{ficha}{ADR-005 · Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL}
-  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
+  \frow{Estado}{Aceptado}
   \frow{Contexto}{Las operaciones de partida y economía deben ser atómicas (ASR-05), la base debe correr en las dos máquinas (ASR-03) y el servidor debe entrar con mínimo privilegio (ASR-04). Los scripts SQL del modelo de datos ya existen en los requisitos.}
   \frow{Alternativas}{A. EF Core 10 con el proveedor de SQL Server, sin migraciones: los scripts SQL mandan y el código se ajusta a ellos; SQL Server 2022 en Docker. A favor: transacciones y consultas tipadas; un solo origen del esquema. En contra: hay que mantener a mano la correspondencia entre entidades y tablas.\newline B. EF Core con migraciones. A favor: el esquema se genera desde el código. En contra: dos fuentes de verdad, los scripts y las migraciones, que tarde o temprano divergen.\newline C. ADO.NET con SQL escrito a mano. A favor: control total y lo más cercano a lo visto en clase. En contra: mucho más código repetitivo y propenso a errores de mapeo.\newline D. Azure SQL Edge en Docker para tener imagen ARM en Mac. A favor: nativo en Apple silicon. En contra: Microsoft lo retiró.}
   \frow{Criterios}{Atomicidad (ASR-05), multiplataforma (ASR-03), un solo origen del esquema, esfuerzo.}
   \frow{Decisión}{A. \texttt{BastionDbContext} con configuraciones por entidad y repositorios en \texttt{Bastion.Server.Data}; el inicio de sesión \texttt{BastionServerConnection} no tiene permiso \texttt{DELETE}; la cadena de conexión vive en user-secrets o en variables de entorno, nunca en el repositorio. En Mac la imagen x64 corre con Rosetta.}
-  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac, y que el profesor acepte EF Core.}
-  \frow{Riesgos}{R-01, R-04}
+  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac.}
+  \frow{Riesgos}{R-03}
   \frow{Elementos afectados}{C-06, C-07}
 \end{ficha}
 
@@ -486,7 +485,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Criterios}{Separación de presentación (ASR-07), contratos estables, esfuerzo para agregar idiomas.}
   \frow{Decisión}{A. El idioma por omisión es en-US, lo que sustituye el es-MX por omisión previsto en D-21. Los correos, que salen del servidor, usan los recursos del servidor con el idioma preferido de la cuenta (D-21).}
   \frow{Consecuencias}{Se gana un contrato independiente del idioma y una prueba simple de claves faltantes. Se paga mantener dos archivos de recursos sincronizados.}
-  \frow{Riesgos}{R-08}
+  \frow{Riesgos}{R-07}
   \frow{Elementos afectados}{C-01, C-02, C-04}
 \end{ficha}
 
@@ -670,15 +669,14 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Se inicia en la primera entrega y se mantiene hasta la entrega final.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.8cm}|Y|Y|}\hline
   \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
-  R-01 & Decisión abierta & El profesor no ha confirmado que EF Core sea aceptable como framework de persistencia en lugar del Entity Framework visto en clase (ADR-005). & Pedir la confirmación por escrito antes de la segunda entrega; si se rechaza, sustituir la implementación de los repositorios de C-06 sin tocar los servicios de C-04.\\\hline
-  R-02 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
-  R-03 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
-  R-04 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
-  R-05 & Riesgo & Un único servidor guarda en memoria la cola, las partidas en curso y los espectadores: si se cae, ese estado se pierde y el servicio se interrumpe (ADR-001, QAS-05). & Escribir cada jugada antes de notificarla (ASR-05) para reconstruir partidas desde la base; aceptar el punto único de falla dado el supuesto de uso en aula.\\\hline
-  R-06 & Riesgo & No se ha medido la latencia de los callbacks con 20 partidas ni la difusión a 200 espectadores (QAS-03, QAS-12). & Construir un prototipo de carga con clientes simulados para la entrega final (será una EV).\\\hline
-  R-07 & Decisión abierta & El repositorio remoto será GitLab o Bitbucket. & Elegir según lo que indique el curso; no afecta la arquitectura.\\\hline
-  R-08 & Pendiente & No se ha elegido el servicio de correo ni el proveedor del segundo factor, y los correos aún no tienen recursos por idioma (C-08, ADR-006). & Definir la interfaz en C-04 y una implementación de prueba que escriba en la bitácora; elegir el proveedor antes de construir CU-02 a CU-04.\\\hline
-  R-09 & Deuda & CoreWCF depende de reflexión y arrastra dependencias con vulnerabilidades conocidas: una se fijó a mano (\texttt{System.Security.\allowbreak{}Cryptography.Xml}) y nunca debe activarse \texttt{PublishTrimmed} ni \texttt{PublishAot} (ADR-002). & Revisar los avisos de paquetes en cada entrega; mantener la nota en \texttt{Directory.Build.props}.\\\hline
+  R-01 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
+  R-02 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
+  R-03 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
+  R-04 & Riesgo & Un único servidor guarda en memoria la cola, las partidas en curso y los espectadores: si se cae, ese estado se pierde y el servicio se interrumpe (ADR-001, QAS-05). & Escribir cada jugada antes de notificarla (ASR-05) para reconstruir partidas desde la base; aceptar el punto único de falla dado el supuesto de uso en aula.\\\hline
+  R-05 & Riesgo & No se ha medido la latencia de los callbacks con 20 partidas ni la difusión a 200 espectadores (QAS-03, QAS-12). & Construir un prototipo de carga con clientes simulados para la entrega final (será una EV).\\\hline
+  R-06 & Decisión abierta & El repositorio remoto será GitLab o Bitbucket. & Elegir según lo que indique el curso; no afecta la arquitectura.\\\hline
+  R-07 & Pendiente & No se ha elegido el servicio de correo ni el proveedor del segundo factor, y los correos aún no tienen recursos por idioma (C-08, ADR-006). & Definir la interfaz en C-04 y una implementación de prueba que escriba en la bitácora; elegir el proveedor antes de construir CU-02 a CU-04.\\\hline
+  R-08 & Deuda & CoreWCF depende de reflexión y arrastra dependencias con vulnerabilidades conocidas: una se fijó a mano (\texttt{System.Security.\allowbreak{}Cryptography.Xml}) y nunca debe activarse \texttt{PublishTrimmed} ni \texttt{PublishAot} (ADR-002). & Revisar los avisos de paquetes en cada entrega; mantener la nota en \texttt{Directory.Build.props}.\\\hline
 \end{tabularx}
 
 \subsection{Transición a Construcción\greenbadge{Entrega final}}
