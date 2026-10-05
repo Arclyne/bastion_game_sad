@@ -97,8 +97,8 @@
 
 \vspace{1.2em}
 \noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
-  Proyecto & Bastión · juego de mesa multijugador por turnos inspirado en Quoridor («Laberinto de Muros»)\\\hline
-  Equipo e integrantes & Equipo Bastión · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
+  Proyecto & Bastión \\\hline
+  Equipo e integrantes & Equipo 4 · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
   Versión del documento & v0.1\\\hline
   Entrega & Primera entrega\\\hline
   Fecha & 05/10/2026\\\hline
@@ -142,7 +142,7 @@
 
 \subsection{Resumen de la arquitectura}
 \hint{Máximo una página: problema, drivers principales, estructura general, decisiones esenciales y riesgos abiertos. Conviene escribirlo al final de cada entrega.}
-\textbf{Problema.} Bastión es un juego de mesa por turnos inspirado en Quoridor, con partidas en línea de dos o cuatro jugadores, partidas contra la IA, ranking por elo, economía cosmética con monedas y cajas, chat, espectadores y moderación (CU-01 a CU-49). Lo construye un equipo de dos personas, una en macOS arm64 y otra en Windows, con C\# sobre .NET y WCF, sin tecnologías web.
+\textbf{Problema.} Bastión es un juego de mesa por turnos inspirado en Quoridor, con partidas en línea de dos o cuatro jugadores, partidas contra la IA, ranking por elo, economía cosmética con monedas y cajas, chat, espectadores y moderación (CU-01 a CU-49). Lo construye un equipo de dos personas, una en macOS arm64 y otra en Windows, con un stack propio aprobado por el profesor: C\# sobre .NET 10, MonoGame DesktopGL, CoreWCF y SQL Server, sin tecnologías web.
 
 \textbf{Drivers principales.} Que un cliente modificado no pueda hacer trampa (QAS-01) y que las contraseñas resistan intentos en serie (QAS-02); que una jugada llegue al rival en menos de 500 ms (QAS-03); que una desconexión o una falla de la base no deje partidas ni compras a medias (QAS-05 a QAS-07); y que todo funcione igual en los dos sistemas (QAS-08). De ahí salen siete ASR: servidor como única autoridad (ASR-01), notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), seguridad sin cifrado de transporte (ASR-04), atomicidad (ASR-05), reglas aisladas y probables (ASR-06) e internacionalización (ASR-07).
 
@@ -150,7 +150,7 @@
 
 \textbf{Decisiones esenciales.} CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); MonoGame DesktopGL (ADR-003); \texttt{SecurityMode.None} con la seguridad en el servidor (ADR-004); EF Core y SQL Server 2022 con el esquema en scripts SQL (ADR-005); resultados codificados traducidos en el cliente (ADR-006).
 
-\textbf{Riesgos abiertos.} La aceptación de CoreWCF y EF Core por el profesor (R-01), las credenciales en claro en la red (R-02), la presentación del tablero (R-03), SQL Server bajo Rosetta (R-04), el servidor como punto único de falla (R-05) y la latencia aún sin medir (R-06).
+\textbf{Riesgos abiertos.} La confirmación de EF Core por el profesor (R-01), las credenciales en claro en la red (R-02), la presentación del tablero (R-03), SQL Server bajo Rosetta (R-04), el servidor como punto único de falla (R-05) y la latencia aún sin medir (R-06).
 
 \subsection{Glosario}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
@@ -159,7 +159,7 @@
   Servidor de partidas & Proceso .NET que expone los servicios CoreWCF, valida toda regla del juego y de la cuenta, y es el único que accede a la base de datos.\\\hline
   Contrato & Interfaz de servicio o de callback y sus tipos de datos (\texttt{Bastion.Contracts}), compartidos por cliente y servidor.\\\hline
   Callback & Llamada que el servidor hace al cliente por el canal dúplex para avisarle de un cambio (jugada del rival, mensaje de chat, fin de partida) sin que el cliente lo pida.\\\hline
-  Dúplex net.tcp & Canal TCP binario de WCF que permite llamadas en ambos sentidos sobre la misma conexión.\\\hline
+  Dúplex net.tcp & Canal TCP binario de CoreWCF que permite llamadas en ambos sentidos sobre la misma conexión.\\\hline
   Token de sesión & Valor aleatorio que el servidor entrega al iniciar sesión y que acompaña cada llamada posterior. Solo se guarda su resumen SHA-256; vence a las 24 horas (CU-01 RN-07).\\\hline
   Partida & Juego entre dos o cuatro participantes, o contra la IA, en un \textit{modo}. Termina por llegada a meta, reloj, rendición, tablas o abandono (CU-25 RN-01).\\\hline
   Participación & Registro de un jugador en una partida, con su elo de entrada y su resultado. Un jugador tiene como mucho una sin terminar (D-01, D-11).\\\hline
@@ -228,11 +228,11 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Una restricción viene impuesta: el equipo no la decide. Un supuesto es algo que creen cierto pero no han comprobado. Si una fila habla de tiempos de respuesta o de carga, probablemente es un escenario (2.5).}
 \noindent\begin{tabularx}{\linewidth}{|p{3.6cm}|Y|Y|}\hline
   \headrow\hd{Tipo} & \hd{Enunciado} & \hd{Qué pasa si cambia o resulta falso}\\\hline
-  \small Restricción & El curso prohíbe el stack web, WebSockets, SignalR, gRPC y REST: la comunicación debe ser con WCF. & Si se permitiera otra tecnología, la capa de comunicación cambiaría, pero los contratos y el servidor como autoridad se conservarían.\\\hline
+  \small Restricción & El curso pide comunicación dúplex sobre net.tcp con llamadas asíncronas y prohíbe el stack web, WebSockets, SignalR, gRPC y REST; el equipo la cumple con su stack propio (CoreWCF, ADR-002). & Si se permitiera otra tecnología, la capa de comunicación cambiaría, pero los contratos y el servidor como autoridad se conservarían.\\\hline
   \small Restricción & El lenguaje es C\# sobre .NET; el sistema es una aplicación de escritorio cliente-servidor. & Cambiar de lenguaje o de plataforma invalidaría todas las decisiones tecnológicas.\\\hline
   \small Restricción & El sistema debe compilar y ejecutarse en macOS arm64 y en Windows, porque cada integrante trabaja en uno de ellos. & Si ambos usaran Windows, volverían a ser viables WCF de .NET Framework y MonoGame WindowsDX, pero no cambiaría la estructura en capas.\\\hline
   \small Restricción & La base de datos es SQL Server; los datos se guardan en Unicode con la intercalación \texttt{Modern\_Spanish\_100\_CI\_AS\_SC\_UTF8} (D-21). & Otro motor obligaría a reescribir los scripts y a revisar los índices filtrados que garantizan reglas como la de una sola participación sin terminar.\\\hline
-  \small Supuesto & El profesor acepta CoreWCF y EF Core como equivalentes a WCF y a la capa de acceso a datos vistas en clase (pendiente de confirmar, R-01). & Habría que volver a WCF de .NET Framework, lo que deja el servidor solo en Windows, o cambiar el acceso a datos a ADO.NET; los contratos se conservarían.\\\hline
+  \small Supuesto & El profesor acepta EF Core como framework de persistencia en lugar del Entity Framework visto en clase (pendiente de confirmar, R-01). & Habría que cambiar el acceso a datos a otra opción, por ejemplo ADO.NET; los repositorios de C-06 aíslan el cambio del resto del servidor.\\\hline
   \small Supuesto & El juego se usa en una red local o de aula, con decenas de jugadores conectados a la vez y no miles. & Con miles de jugadores, un único servidor con estado en memoria (cola, partidas, espectadores) no bastaría y habría que repartir el estado.\\\hline
   \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, \texttt{SecurityMode.None} deja expuestas las credenciales y habría que añadir seguridad de transporte (R-02).\\\hline
   \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema. & Si el ranking no importara, la validación en el servidor seguiría siendo necesaria para las reglas, pero las transacciones del cierre serían menos críticas.\\\hline
@@ -416,7 +416,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \noindent\begin{tabularx}{\linewidth}{|p{1.9cm}|Y|Y|p{3.2cm}|}\hline
   \headrow\hd{ADR} & \hd{Decisión} & \hd{Estado} & \hd{ASR que atiende}\\\hline
   ADR-001 & Organizar el sistema en capas cliente-servidor con el servidor como única autoridad & Aceptado & ASR-01, ASR-05, ASR-06\\\hline
-  ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado (confirmar con el profesor, R-01) & ASR-02, ASR-03\\\hline
+  ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado & ASR-02, ASR-03\\\hline
   ADR-003 & Construir el cliente con MonoGame DesktopGL & Aceptado & ASR-03\\\hline
   ADR-004 & Usar \texttt{SecurityMode.None} y concentrar la seguridad en el servidor & Aceptado & ASR-04, ASR-03\\\hline
   ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado (confirmar con el profesor, R-01) & ASR-04, ASR-05, ASR-03\\\hline
@@ -436,13 +436,13 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \end{ficha}
 
 \begin{ficha}{ADR-002 · Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas}
-  \frow{Estado}{Aceptado (confirmar con el profesor, R-01)}
-  \frow{Contexto}{El curso exige WCF y prohíbe stack web, WebSockets, SignalR, gRPC y REST. El servidor debe avisar sin que se le pregunte (jugadas, chat, emparejamiento, espectadores: QAS-03, QAS-12) y el servidor debe correr en macOS y en Windows (QAS-08). Están en juego ASR-02 y ASR-03.}
+  \frow{Estado}{Aceptado}
+  \frow{Contexto}{El curso pide comunicación dúplex sobre net.tcp con llamadas asíncronas y prohíbe stack web, WebSockets, SignalR, gRPC y REST. El servidor debe avisar sin que se le pregunte (jugadas, chat, emparejamiento, espectadores: QAS-03, QAS-12) y el servidor debe correr en macOS y en Windows (QAS-08). Están en juego ASR-02 y ASR-03.}
   \frow{Alternativas}{A. CoreWCF 1.9 sobre .NET 10, \texttt{NetTcpBinding} dúplex, contratos en una biblioteca netstandard2.0 y cliente con \texttt{System.ServiceModel}. A favor: corre en ambos sistemas; callbacks en el mismo canal; contratos compartidos. En contra: CoreWCF no implementa todo WCF; usa reflexión, por lo que no se puede recortar ni compilar AOT.\newline B. WCF clásico sobre .NET Framework 4.8. A favor: es lo que se ve en clase; implementación completa. En contra: solo Windows, de modo que el servidor viviría en una sola máquina del equipo (punto único de falla para el desarrollo) y el integrante de macOS no podría ejecutarlo.\newline C. CoreWCF de petición-respuesta con sondeo periódico del cliente. A favor: contratos más simples, sin callbacks. En contra: la latencia depende del intervalo de sondeo (incumple QAS-03 si es largo, sobrecarga el servidor si es corto); 200 espectadores sondeando multiplican la carga (QAS-12).}
   \frow{Criterios}{Tecnologías permitidas, notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), latencia y carga.}
   \frow{Decisión}{A. Contratos de servicio y de callback en \texttt{Bastion.Contracts} (netstandard2.0), operaciones asíncronas en el cliente y difusión por callbacks en el servidor. \texttt{PublishTrimmed} y \texttt{PublishAot} quedan desactivados en \texttt{Directory.Build.props}.}
-  \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26) y la dependencia de que el profesor acepte CoreWCF como WCF.}
-  \frow{Riesgos}{R-01, R-06, R-09}
+  \frow{Consecuencias}{Se gana notificación inmediata y un solo canal por cliente. Se paga un canal con estado que hay que vigilar (fallas del canal = desconexión, CU-26).}
+  \frow{Riesgos}{R-06, R-09}
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04}
 \end{ficha}
 
@@ -670,7 +670,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Se inicia en la primera entrega y se mantiene hasta la entrega final.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.8cm}|Y|Y|}\hline
   \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
-  R-01 & Decisión abierta & El profesor no ha confirmado que CoreWCF y EF Core sean aceptables en lugar de WCF de .NET Framework y del acceso a datos visto en clase (ADR-002, ADR-005). & Pedir la confirmación por escrito antes de la segunda entrega; si se rechaza, evaluar el impacto con los contratos ya aislados en C-02.\\\hline
+  R-01 & Decisión abierta & El profesor no ha confirmado que EF Core sea aceptable como framework de persistencia en lugar del Entity Framework visto en clase (ADR-005). & Pedir la confirmación por escrito antes de la segunda entrega; si se rechaza, sustituir la implementación de los repositorios de C-06 sin tocar los servicios de C-04.\\\hline
   R-02 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
   R-03 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
   R-04 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
