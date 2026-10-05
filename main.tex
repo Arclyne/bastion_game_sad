@@ -14,6 +14,8 @@
 \usepackage{enumitem}
 \usepackage{amssymb}
 \usepackage[skins,breakable]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 \usepackage[colorlinks=true,linkcolor=SADBlue,urlcolor=SADBlue]{hyperref}
 
 \renewcommand{\familydefault}{\sfdefault}
@@ -140,7 +142,15 @@
 
 \subsection{Resumen de la arquitectura}
 \hint{Máximo una página: problema, drivers principales, estructura general, decisiones esenciales y riesgos abiertos. Conviene escribirlo al final de cada entrega.}
-\ph{[Resumen.]}
+\textbf{Problema.} Bastión es un juego de mesa por turnos inspirado en Quoridor, con partidas en línea de dos o cuatro jugadores, partidas contra la IA, ranking por elo, economía cosmética con monedas y cajas, chat, espectadores y moderación (CU-01 a CU-49). Lo construye un equipo de dos personas, una en macOS arm64 y otra en Windows, con C\# sobre .NET y WCF, sin tecnologías web.
+
+\textbf{Drivers principales.} Que un cliente modificado no pueda hacer trampa (QAS-01) y que las contraseñas resistan intentos en serie (QAS-02); que una jugada llegue al rival en menos de 500 ms (QAS-03); que una desconexión o una falla de la base no deje partidas ni compras a medias (QAS-05 a QAS-07); y que todo funcione igual en los dos sistemas (QAS-08). De ahí salen siete ASR: servidor como única autoridad (ASR-01), notificación del servidor al cliente (ASR-02), multiplataforma (ASR-03), seguridad sin cifrado de transporte (ASR-04), atomicidad (ASR-05), reglas aisladas y probables (ASR-06) e internacionalización (ASR-07).
+
+\textbf{Estructura general.} Cliente-servidor en capas (ADR-001): el cliente MonoGame (C-01) solo conoce los contratos (C-02); el servidor (C-03) expone CoreWCF, sus servicios (C-04) validan con un dominio sin dependencias (C-05) y guardan con EF Core (C-06) en SQL Server (C-07). Las vistas V-01 y V-02 lo muestran.
+
+\textbf{Decisiones esenciales.} CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); MonoGame DesktopGL (ADR-003); \texttt{SecurityMode.None} con la seguridad en el servidor (ADR-004); EF Core y SQL Server 2022 con el esquema en scripts SQL (ADR-005); resultados codificados traducidos en el cliente (ADR-006).
+
+\textbf{Riesgos abiertos.} La aceptación de CoreWCF y EF Core por el profesor (R-01), las credenciales en claro en la red (R-02), la presentación del tablero (R-03), SQL Server bajo Rosetta (R-04), el servidor como punto único de falla (R-05) y la latencia aún sin medir (R-06).
 
 \subsection{Glosario}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
@@ -489,10 +499,17 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \subsection{Módulos y componentes}
 \noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{3.6cm}|Y|Y|}\hline
   \headrow\hd{ID} & \hd{Nombre y tipo} & \hd{Responsabilidad} & \hd{Provee / requiere}\\\hline
-  C-01 & \ph{[Nombre · módulo o componente]} & \ph{[Una frase]} & \ph{[Interfaces]}\\\hline
-  & & & \\\hline
+  C-01 & Bastion.Client · módulo (ejecutable de escritorio) & Dibuja las pantallas y el tablero, captura la entrada del jugador, muestra los textos en en-US o es-MX y llama a los servicios del servidor; no decide ninguna regla. & Requiere los contratos de servicio de C-02; provee los contratos de callback de C-02.\\\hline
+  C-02 & Bastion.Contracts · módulo (biblioteca netstandard2.0) & Define los contratos de servicio y de callback, los datos que viajan y los resultados codificados. & Provee \texttt{IAccountService}, \texttt{ILeaderboardService} y los contratos de partida, chat, tienda y moderación; no requiere nada.\\\hline
+  C-03 & Bastion.Server.Host · componente (proceso del servidor) & Raíz de composición: levanta CoreWCF sobre net.tcp, registra servicios y repositorios en el contenedor de dependencias, lee la configuración y los secretos, y configura log4net. & Provee los extremos net.tcp de C-02; requiere C-04 y C-06.\\\hline
+  C-04 & Bastion.Server.Services · módulo & Implementa los contratos: valida cada solicitud, aplica la seguridad (resúmenes de contraseña, tokens, bloqueo, auditoría), coordina partidas y transacciones, y difunde por callbacks. & Provee las implementaciones de C-02; requiere C-05, las interfaces \texttt{IXRepository} de C-06 y la interfaz de C-08.\\\hline
+  C-05 & Bastion.Domain · módulo & Reglas del juego: tablero, peones, muros, saltos, validación de caminos y motor de la IA. & Provee la API de reglas; no requiere nada.\\\hline
+  C-06 & Bastion.Server.Data · módulo & Acceso a datos con EF Core: contexto, entidades, configuraciones y repositorios. & Provee \texttt{IAccountRepository}, \texttt{ISessionRepository}, \texttt{IAccessLogRepository}, \texttt{ILeaderboardRepository} y \texttt{IGameModeRepository}; requiere C-07.\\\hline
+  C-07 & Base de datos Bastion · componente (SQL Server 2022 en Docker) & Guarda cuentas, sesiones, partidas, economía y bitácoras; garantiza unicidad y reglas con índices y restricciones. & Provee el esquema de los scripts de \texttt{database/}; se accede solo con \texttt{BastionServerConnection}.\\\hline
+  C-08 & Pasarela de correo y segundo factor · componente (planeado) & Envía los correos de verificación, recuperación y cambio de correo, y entrega el segundo factor, detrás de una interfaz. & Provee una interfaz de envío a C-04; requiere el servicio de correo externo.\\\hline
 \end{tabularx}
 \hint{Lo repetitivo se resuelve por convención: escriban la convención una vez, debajo de la tabla.}
+\textbf{Convención.} Dentro de cada módulo el código se agrupa por funcionalidad (\texttt{Accounts}, \texttt{Leaderboard}, \texttt{Sessions}…) y el espacio de nombres sigue la carpeta; cada tipo va en su propio archivo con su nombre. Cada funcionalidad repite el mismo trío: un contrato \texttt{IXService} en C-02, su implementación \texttt{XService} en C-04 y uno o más \texttt{IXRepository} con su implementación en C-06. Las entidades de EF Core nunca salen de C-04: se convierten en datos del contrato. Las pantallas del cliente siguen el par \texttt{XScreen} y \texttt{XController}, y sus textos usan claves \texttt{Pantalla.Elemento}.\par
 
 \subsection{Interfaces críticas}
 \hint{Sólo las interfaces cuyo incumplimiento produce un riesgo real: dinero, estado compartido, datos personales…}
@@ -544,14 +561,71 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 
 \subsection{Vistas}
 \hint{Copien la ficha para cada vista y coloquen el diagrama justo debajo. Declaren al menos una correspondencia con otra vista: qué debe coincidir entre ambas.}
-\begin{ficha}{V-\_\_ · \ph{[nombre de la vista]}}
-  \frow{Tipo de vista}{\ph{[Contexto / Estructura / Ejecución / Despliegue]}}
-  \frow{Para quién y para qué}{\ph{[Audiencia y lo que la vista le permite entender o decidir]}}
-  \frow{Preocupaciones que atiende}{\ph{[…]}}
-  \frow{Notación y leyenda}{\ph{[UML, C4, tabla…; qué significa cada símbolo si no es obvio]}}
-  \frow{Se corresponde con}{\ph{[V-\_\_: qué debe coincidir entre ambas]}}
+\begin{ficha}{V-01 · Contexto de Bastión}
+  \frow{Tipo de vista}{Contexto}
+  \frow{Para quién y para qué}{Para el profesor y el equipo: ver de un vistazo qué está dentro del sistema, quién lo usa y de qué sistemas externos depende.}
+  \frow{Preocupaciones que atiende}{Frontera del sistema, actores humanos y dependencias externas (sección 2.1).}
+  \frow{Notación y leyenda}{C4 nivel 1. Figuras: personas; recuadro azul: el sistema; recuadros grises: sistemas externos; flechas: quién inicia la comunicación.}
+  \frow{Se corresponde con}{V-02: el recuadro de Bastión se descompone en C-01 a C-08, y las flechas hacia el correo y el segundo factor salen de C-08.}
 \end{ficha}
-\begin{center}\ph{[Diagrama]}\end{center}
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  person/.style={draw=SADNavy,fill=SADHead,rounded corners=6pt,align=center,minimum width=2.6cm,minimum height=1cm},
+  sys/.style={draw=SADBlue,fill=SADBlue,text=white,align=center,minimum width=5.4cm,minimum height=2.2cm,font=\small\bfseries},
+  ext/.style={draw=SADGray,fill=black!8,align=center,minimum width=3.4cm,minimum height=1.2cm},
+  arr/.style={-{Stealth[length=2mm]},thick,SADNavy},
+  lbl/.style={fill=white,inner sep=1pt,font=\scriptsize}]
+  \node[sys] (b) at (-0.6,0) {Bastión\\[2pt]{\normalfont\footnotesize Juego de mesa multijugador por turnos:}\\{\normalfont\footnotesize cliente de escritorio, servidor y base de datos}};
+  \node[person] (j) at (-5.2,2.6) {Jugador\\{\footnotesize registrado}};
+  \node[person] (i) at (-2.2,3.3) {Invitado};
+  \node[person] (e) at (1.2,3.3) {Espectador\\{\footnotesize anónimo}};
+  \node[person] (m) at (-5.2,-2.4) {Moderador};
+  \node[person] (a) at (-1.8,-3.1) {Administrador};
+  \node[ext] (c) at (5.6,1.6) {Servicio de correo\\{\footnotesize externo}};
+  \node[ext] (f) at (5.6,-1.6) {Proveedor del\\segundo factor};
+  \draw[arr] (j) -- node[lbl]{juega, compra, chatea} (b);
+  \draw[arr] (i) -- node[lbl]{juega} (b);
+  \draw[arr] (e) -- node[lbl]{observa} (b);
+  \draw[arr] (m) -- node[lbl]{revisa y sanciona} (b);
+  \draw[arr] (a) -- node[lbl]{consulta bitácoras} (b);
+  \draw[arr] (b) -- node[lbl,pos=0.6]{envía correos} (c);
+  \draw[arr] (b) -- node[lbl,pos=0.6]{segundo factor} (f);
+\end{tikzpicture}
+\end{center}
+
+\begin{ficha}{V-02 · Estructura en capas}
+  \frow{Tipo de vista}{Estructura}
+  \frow{Para quién y para qué}{Para el equipo: saber en qué módulo va cada clase y qué referencias están permitidas; para el profesor: comprobar que la estructura sigue ADR-001.}
+  \frow{Preocupaciones que atiende}{Módulos, dependencias permitidas, frontera de red y quién accede a la base de datos.}
+  \frow{Notación y leyenda}{UML de componentes simplificado. Recuadros: módulos o componentes con su C-xx; flecha continua: dependencia de compilación; flecha discontinua: comunicación por red o por conexión a la base; línea punteada: límite de confianza entre cliente y servidor.}
+  \frow{Se corresponde con}{V-01: C-01 a C-08 forman el recuadro de Bastión y C-08 es la única salida hacia el correo y el segundo factor; la tabla 4.1: cada recuadro es una fila con el mismo identificador.}
+\end{ficha}
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  mod/.style={draw=SADNavy,fill=SADHead,align=center,minimum width=3.6cm,minimum height=1.05cm},
+  ext/.style={draw=SADGray,fill=black!8,align=center,minimum width=3.6cm,minimum height=1.05cm},
+  dep/.style={-{Stealth[length=2mm]},thick,SADNavy},
+  net/.style={-{Stealth[length=2mm]},thick,dashed,SADBlue}]
+  \node[mod] (cl) at (-4.4,2.4) {C-01 Bastion.Client\\{\footnotesize MonoGame DesktopGL}};
+  \node[mod] (co) at (0,2.4) {C-02 Bastion.Contracts\\{\footnotesize netstandard2.0}};
+  \node[mod] (h) at (4.4,2.4) {C-03 Server.Host\\{\footnotesize CoreWCF net.tcp}};
+  \node[mod] (s) at (4.4,0) {C-04 Server.Services};
+  \node[mod] (d) at (0,0) {C-05 Bastion.Domain\\{\footnotesize sin dependencias}};
+  \node[mod] (da) at (4.4,-2.4) {C-06 Server.Data\\{\footnotesize EF Core}};
+  \node[ext] (db) at (4.4,-4.6) {C-07 SQL Server 2022\\{\footnotesize Docker}};
+  \node[ext] (m) at (0,-2.4) {C-08 Pasarela de correo\\{\footnotesize planeado}};
+  \draw[dep] (cl) -- (co);
+  \draw[dep] (s) -- (co);
+  \draw[dep] (h) -- (s);
+  \draw[dep] (h) to[bend left=40] (da);
+  \draw[dep] (s) -- (d);
+  \draw[dep] (s) -- (da);
+  \draw[net] (da) -- node[left,font=\scriptsize]{BastionServerConnection} (db);
+  \draw[net] (cl) to[bend left=22] node[above,font=\scriptsize]{dúplex net.tcp (SecurityMode.None)} (h);
+  \draw[dep] (s) -- (m);
+  \draw[densely dotted,very thick,SADGray] (-2.2,3.6) -- (-2.2,-5.2) node[below,font=\scriptsize,text=SADGray]{límite de confianza};
+\end{tikzpicture}
+\end{center}
 
 % =====================================================================
 % 7. Evaluación, trazabilidad y transición
@@ -596,8 +670,15 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \hint{Se inicia en la primera entrega y se mantiene hasta la entrega final.}
 \noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.8cm}|Y|Y|}\hline
   \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
-  R-01 & \ph{[Riesgo / Deuda / Decisión abierta / Pendiente]} & \ph{[…]} & \ph{[…]}\\\hline
-  & & & \\\hline
+  R-01 & Decisión abierta & El profesor no ha confirmado que CoreWCF y EF Core sean aceptables en lugar de WCF de .NET Framework y del acceso a datos visto en clase (ADR-002, ADR-005). & Pedir la confirmación por escrito antes de la segunda entrega; si se rechaza, evaluar el impacto con los contratos ya aislados en C-02.\\\hline
+  R-02 & Riesgo & Con \texttt{SecurityMode.None}, un atacante en la misma red puede leer contraseñas y tokens en tránsito (ADR-004, QAS-02). & Documentar el supuesto de red de confianza; investigar seguridad de transporte con certificado entre macOS y Windows con un prototipo pequeño.\\\hline
+  R-03 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & Decidir con un prototipo de cada opción en MonoGame antes de construir la pantalla de partida; se registrará como ADR.\\\hline
+  R-04 & Riesgo & En macOS arm64 no hay imagen ARM de SQL Server 2022; la imagen x64 corre con Rosetta, con posible pérdida de rendimiento o fallas (ADR-005). & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
+  R-05 & Riesgo & Un único servidor guarda en memoria la cola, las partidas en curso y los espectadores: si se cae, ese estado se pierde y el servicio se interrumpe (ADR-001, QAS-05). & Escribir cada jugada antes de notificarla (ASR-05) para reconstruir partidas desde la base; aceptar el punto único de falla dado el supuesto de uso en aula.\\\hline
+  R-06 & Riesgo & No se ha medido la latencia de los callbacks con 20 partidas ni la difusión a 200 espectadores (QAS-03, QAS-12). & Construir un prototipo de carga con clientes simulados para la entrega final (será una EV).\\\hline
+  R-07 & Decisión abierta & El repositorio remoto será GitLab o Bitbucket. & Elegir según lo que indique el curso; no afecta la arquitectura.\\\hline
+  R-08 & Pendiente & No se ha elegido el servicio de correo ni el proveedor del segundo factor, y los correos aún no tienen recursos por idioma (C-08, ADR-006). & Definir la interfaz en C-04 y una implementación de prueba que escriba en la bitácora; elegir el proveedor antes de construir CU-02 a CU-04.\\\hline
+  R-09 & Deuda & CoreWCF depende de reflexión y arrastra dependencias con vulnerabilidades conocidas: una se fijó a mano (\texttt{System.Security.\allowbreak{}Cryptography.Xml}) y nunca debe activarse \texttt{PublishTrimmed} ni \texttt{PublishAot} (ADR-002). & Revisar los avisos de paquetes en cada entrega; mantener la nota en \texttt{Directory.Build.props}.\\\hline
 \end{tabularx}
 
 \subsection{Transición a Construcción\greenbadge{Entrega final}}
