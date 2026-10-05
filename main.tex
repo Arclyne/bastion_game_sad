@@ -13,7 +13,7 @@
 \usepackage{etoolbox}
 \usepackage{enumitem}
 \usepackage{amssymb}
-\usepackage{tcolorbox}
+\usepackage[skins,breakable]{tcolorbox}
 \usepackage[colorlinks=true,linkcolor=SADBlue,urlcolor=SADBlue]{hyperref}
 
 \renewcommand{\familydefault}{\sfdefault}
@@ -95,11 +95,11 @@
 
 \vspace{1.2em}
 \noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
-  Proyecto & \ph{[Nombre del videojuego o sistema]}\\\hline
-  Equipo e integrantes & \ph{[Identificador del equipo · nombre completo de cada integrante]}\\\hline
-  Versión del documento & \ph{[v0.1, v1.0…]}\\\hline
-  Entrega & \ph{[Primera entrega / Entrega final]}\\\hline
-  Fecha & \ph{[dd/mm/aaaa]}\\\hline
+  Proyecto & Bastión · juego de mesa multijugador por turnos inspirado en Quoridor («Laberinto de Muros»)\\\hline
+  Equipo e integrantes & Equipo Bastión · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
+  Versión del documento & v0.1\\\hline
+  Entrega & Primera entrega\\\hline
+  Fecha & 05/10/2026\\\hline
 \end{tabularx}
 
 \vspace{1.4em}
@@ -125,16 +125,16 @@
 
 \subsection{Control e historial}
 \noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
-  Sistema & \ph{[Nombre y descripción en una línea]}\\\hline
-  Propósito del documento & \ph{[Qué permitirá hacer a quien lo lea]}\\\hline
-  Audiencia & \ph{[Quién lo leerá y para qué]}\\\hline
-  Alcance & \ph{[Qué parte del sistema cubre y qué queda fuera]}\\\hline
+  Sistema & Bastión: juego de escritorio cliente-servidor en el que dos o cuatro jugadores mueven su peón y colocan muros por turnos para llegar primero a la orilla opuesta del tablero, con cuentas, ranking, economía cosmética y moderación.\\\hline
+  Propósito del documento & Explicar qué obliga a la arquitectura a tomar su forma, qué decisiones se tomaron y con qué alternativas se compararon, para que el equipo construya sin romperlas y el profesor pueda evaluarlas.\\\hline
+  Audiencia & Los dos integrantes del equipo (para construir y mantener el sistema con un criterio común) y el profesor de la experiencia educativa (para evaluar y para confirmar las decisiones abiertas).\\\hline
+  Alcance & Cubre el cliente de escritorio, el servidor de partidas, los contratos de comunicación y la base de datos, con las funciones de los casos de uso CU-01 a CU-49. Quedan fuera el diseño gráfico y sonoro, el contenido de los catálogos (objetos, lecciones, palabras prohibidas) y la operación en producción: el sistema se despliega en las máquinas del equipo y en el aula.\\\hline
 \end{tabularx}
 
 \medskip
 \noindent\begin{tabularx}{\linewidth}{|p{2.6cm}|p{3cm}|Y|}\hline
   \headrow\hd{Versión} & \hd{Fecha} & \hd{Cambios principales}\\\hline
-  \ph{[v0.1]} & \ph{[dd/mm/aaaa]} & \ph{[Qué se agregó o corrigió]}\\\hline
+  v0.1 & 05/10/2026 & Primera entrega: control, glosario, drivers (contexto, interesados, funciones clave, restricciones, escenarios de calidad y ASR), decisiones ADR, módulos iniciales, vistas V-01 y V-02, y riesgos iniciales.\\\hline
   & & \\\hline
 \end{tabularx}
 
@@ -145,16 +145,33 @@
 \subsection{Glosario}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
   \headrow\hd{Término} & \hd{Significado en este proyecto}\\\hline
-  \ph{[Término]} & \ph{[Definición]}\\\hline
-  & \\\hline
+  Cliente & Aplicación de escritorio (MonoGame DesktopGL) que dibuja las pantallas y envía las acciones del jugador. No decide nada: solo muestra el estado que le da el servidor.\\\hline
+  Servidor de partidas & Proceso .NET que expone los servicios CoreWCF, valida toda regla del juego y de la cuenta, y es el único que accede a la base de datos.\\\hline
+  Contrato & Interfaz de servicio o de callback y sus tipos de datos (\texttt{Bastion.Contracts}), compartidos por cliente y servidor.\\\hline
+  Callback & Llamada que el servidor hace al cliente por el canal dúplex para avisarle de un cambio (jugada del rival, mensaje de chat, fin de partida) sin que el cliente lo pida.\\\hline
+  Dúplex net.tcp & Canal TCP binario de WCF que permite llamadas en ambos sentidos sobre la misma conexión.\\\hline
+  Token de sesión & Valor aleatorio que el servidor entrega al iniciar sesión y que acompaña cada llamada posterior. Solo se guarda su resumen SHA-256; vence a las 24 horas (CU-01 RN-07).\\\hline
+  Partida & Juego entre dos o cuatro participantes, o contra la IA, en un \textit{modo}. Termina por llegada a meta, reloj, rendición, tablas o abandono (CU-25 RN-01).\\\hline
+  Participación & Registro de un jugador en una partida, con su elo de entrada y su resultado. Un jugador tiene como mucho una sin terminar (D-01, D-11).\\\hline
+  Modo & Variante de juego: clásico 9×9 a dos jugadores con diez muros, cuatro jugadores 9×9 con cinco muros, rápida 7×7 con seis muros (CU-17 RN-02).\\\hline
+  Muro & Pieza de dos casillas que se coloca en el surco entre casillas; nunca puede dejar a un jugador sin camino a su meta (CU-21 RN-05).\\\hline
+  Elo & Puntuación de habilidad por modo que cambia al terminar una partida clasificatoria y ordena el ranking.\\\hline
+  Partida clasificatoria & La que se crea por emparejamiento (CU-17). Es la única que otorga elo y monedas; las de sala privada y contra la IA no.\\\hline
+  Sala privada & Partida que se arma con un código o una invitación (CU-18, CU-19, CU-32).\\\hline
+  Invitado & Cuenta sin correo ni contraseña atada a un token guardado en el dispositivo; puede vincularse después a una cuenta registrada (CU-06, CU-07).\\\hline
+  Sanción & Restricción que aplica un moderador, de ámbito cuenta o chat, temporal o permanente (D-05).\\\hline
+  Bitácora & Registro de solo inserción de accesos y de acciones de moderación (CU-48).\\\hline
+  Resultado codificado & Valor de enumeración que el servidor devuelve en lugar de un texto; el cliente lo traduce con sus recursos \texttt{.resx}.\\\hline
+  Usuario de mínimo privilegio & Inicio de sesión de SQL Server \texttt{BastionServerConnection}, sin permiso \texttt{DELETE}, con el que el servidor accede a la base de datos.\\\hline
 \end{tabularx}
 
 \subsection{Uso de IA generativa}
 \hint{Una fila por uso significativo. No anexen conversaciones.}
 \noindent\begin{tabularx}{\linewidth}{|Y|Y|Y|}\hline
   \headrow\hd{Qué pidieron} & \hd{Qué aceptaron y qué rechazaron} & \hd{Cómo lo verificaron}\\\hline
-  \ph{[…]} & \ph{[…]} & \ph{[…]}\\\hline
-  & & \\\hline
+  Apoyo en investigación: comparar opciones de interfaz (MonoGame, Godot, Unity, Stride, Avalonia), de comunicación (CoreWCF frente a WCF de .NET Framework) y de base de datos que funcionaran en macOS arm64 y en Windows. & Se aceptaron como punto de partida los resúmenes de ventajas y limitaciones; se rechazó toda opción prohibida por el curso o que no corriera en ambos sistemas. La elección final de cada tecnología la tomó el equipo y está en sus ADR. & Se consultó la documentación oficial de cada tecnología y se compiló y ejecutó un proyecto mínimo en las dos máquinas del equipo antes de adoptarla.\\\hline
+  Completación de código: sugerencias al escribir servicios, repositorios, pantallas y pruebas. & Se aceptaron las sugerencias que cumplían el estándar de codificación y las reglas de dependencia; se rechazaron las que ponían reglas en el cliente o mezclaban capas. & Revisión del código por ambos integrantes, compilación con \texttt{EnforceCodeStyleInBuild} y pruebas unitarias con xUnit.\\\hline
+  Elaboración del documento: redacción y formato en LaTeX de esta plantilla a partir de los casos de uso y de las decisiones del equipo. & Se aceptó la redacción que reflejaba lo decidido; se corrigió o eliminó lo que no correspondía a los casos de uso o al código. & Los autores revisaron y validaron cada sección contra los casos de uso, el modelo de datos y el repositorio del código.\\\hline
 \end{tabularx}
 
 % =====================================================================
@@ -165,33 +182,53 @@
 
 \subsection{Contexto y frontera}
 \hint{En un párrafo: qué está dentro del sistema, qué queda fuera y con qué sistemas externos se comunica. El diagrama va en la sección 6 como V-01; aquí sólo refiéranlo.}
-\ph{[Descripción breve.]}
+Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada del jugador, idiomas en-US y es-MX), el \textbf{servidor de partidas} (cuentas, sesiones, emparejamiento, salas, partidas en curso y contra la IA, chat, espectadores, ranking, tienda y cajas, moderación y bitácoras) y la \textbf{base de datos} SQL Server, a la que solo llega el servidor. Los actores humanos son el Jugador, el Invitado, el espectador Anónimo, el Moderador y el Administrador (lista de casos de uso). Fuera del sistema quedan el \textbf{servicio de correo}, que el servidor usa para verificar cuentas, recuperar contraseñas y confirmar cambios de correo (CU-02, CU-03, CU-04, CU-09, CU-11), y el \textbf{proveedor del segundo factor} (CU-01 RN-08); ambos se usan detrás de una interfaz. No hay pagos con dinero real (CU-38 RN-01), ni navegador, ni servicios web. El diagrama de contexto es la vista V-01 (sección 6).
 
 \subsection{Interesados y preocupaciones}
 \hint{Incluyan sólo a quienes tienen una preocupación que puede cambiar la arquitectura. Una preocupación es lo que le importa a alguien, no una función del sistema.}
 \noindent\begin{tabularx}{\linewidth}{|p{5.2cm}|Y|}\hline
   \headrow\hd{Interesado} & \hd{Qué le preocupa}\\\hline
-  \ph{[Rol]} & \ph{[…]}\\\hline
-  & \\\hline
-  & \\\hline
+  Jugador (cuenta registrada) & Que nadie pueda hacer trampa con un cliente modificado; que una jugada se vea en el tablero del rival casi al instante; no perder una partida por un corte breve de red; no perder monedas ni objetos por una falla a mitad de una compra.\\\hline
+  Invitado & Poder jugar sin registrarse y conservar su progreso si después vincula la cuenta (CU-06, CU-07).\\\hline
+  Espectador (con o sin cuenta) & Ver partidas sin poder soplar jugadas ni molestar a los participantes (CU-34).\\\hline
+  Moderador y administrador & Que las sanciones surtan efecto de inmediato y que las bitácoras no puedan alterarse ni borrarse (CU-44, CU-48).\\\hline
+  Equipo de desarrollo (dos integrantes, uno en macOS arm64 y otro en Windows) & Compilar, ejecutar y probar todo en ambos sistemas; trabajar en paralelo sin pisarse; poder probar las reglas del servidor sin base de datos ni red.\\\hline
+  Profesor de la experiencia educativa & Que se respeten las tecnologías permitidas por el curso (sin stack web, WebSockets, SignalR, gRPC ni REST) y que cada decisión esté justificada y trazada hasta su evidencia.\\\hline
 \end{tabularx}
 
 \subsection{Funciones clave}
 \hint{Usen los casos de uso o las historias de usuario que ya tienen, con sus identificadores. Señalen cuáles obligan a tomar decisiones arquitectónicas. Las demás pueden seguir la estructura general del sistema y documentarse sólo cuando sea necesario.}
 \noindent\begin{tabularx}{\linewidth}{|p{4.6cm}|p{3.2cm}|Y|}\hline
   \headrow\hd{Función (CU o HU)} & \hd{¿Arquitectónicamente significativa?} & \hd{Por qué}\\\hline
-  \ph{[CU-01 · nombre]} & \ph{[Sí / No]} & \ph{[Qué la vuelve difícil: concurrencia, dinero, estado compartido, fallas…]}\\\hline
-  & & \\\hline
+  CU-01 · Iniciar sesión & Sí & Credenciales que viajan por un canal sin seguridad de transporte; mensaje y tiempo de respuesta iguales ante cualquier fallo (RN-01); bloqueo escalonado (RN-03); token de 24 horas que toda llamada posterior debe presentar (RN-07).\\\hline
+  CU-02, CU-03, CU-04, CU-09 · Registro, recuperación, verificación y cambio de credenciales & Sí & Dependen de un servicio de correo externo que puede fallar o tardar; los tokens de verificación caducan y el correo vigente no cambia hasta confirmar el nuevo (D-20).\\\hline
+  CU-17 · Buscar partida clasificatoria & Sí & Estado compartido entre muchos clientes (la cola de emparejamiento); la partida y todas sus participaciones se crean en una sola transacción (RN-10); una sola participación sin terminar por jugador (RN-01, D-01).\\\hline
+  CU-20 · Mover el peón y CU-21 · Colocar un muro & Sí & El servidor es la única autoridad sobre el tablero (RN-01, RN-07); toda jugada lleva número de orden para no aplicarse dos veces (CU-20 RN-06); un muro nunca puede cerrar el camino de ningún jugador, lo que obliga a recorrer el tablero (CU-21 RN-05); el rival debe enterarse sin preguntar.\\\hline
+  CU-25 · Finalizar la partida y aplicar la progresión & Sí & Elo, estadísticas, monedas y cierre de participaciones en una sola transacción (RN-12); si falla, la partida queda pendiente de cierre y se reintenta (RN-13).\\\hline
+  CU-24 · Abandonar y CU-26 · Reconectar & Sí & Fallas de red: la desconexión no detiene el reloj, el rival puede reclamar a los 60 segundos (CU-24 RN-06) y el cliente se reconstruye solo con el estado completo del servidor (CU-26 RN-02, RN-06).\\\hline
+  CU-27 · Jugar contra la IA & Sí & La IA juega en el servidor con las mismas reglas que el jugador (RN-04): el motor de reglas debe poder usarse sin red ni base de datos.\\\hline
+  CU-28 · Enviar un mensaje de chat & Sí & Filtro de palabras obligatorio en el servidor; si no puede aplicarse, el mensaje se rechaza (RN-01, RN-11); ritmo de envío acotado (RN-04).\\\hline
+  CU-34 · Ver una partida como espectador & Sí & Difusión a hasta 200 espectadores por partida (RN-03) con ocho segundos de retraso (RN-01), sin persistencia (D-19).\\\hline
+  CU-38 · Comprar un objeto y CU-39 · Comprar y abrir una caja & Sí & Economía: el precio y el sorteo los decide el servidor (CU-38 RN-03, CU-39 RN-08); objeto, movimiento de monedas y saldo en una sola transacción (CU-38 RN-08); el cliente nunca reenvía una compra (RN-09).\\\hline
+  CU-44 · Aplicar una sanción y CU-48 · Consultar las bitácoras & Sí & La sanción de cuenta invalida los tokens vigentes (CU-01 RN-07); las bitácoras solo admiten inserción (CU-48 RN-02).\\\hline
+  CU-05 a CU-16, CU-18, CU-19, CU-22, CU-23, CU-29 a CU-33, CU-35 a CU-37, CU-40 a CU-43, CU-45 a CU-47, CU-49 & No & Siguen la estructura general: una pantalla del cliente, una operación del contrato y un servicio con su repositorio. Reutilizan las decisiones que imponen los casos anteriores (sesión, autoridad del servidor, transacciones).\\\hline
 \end{tabularx}
 
 \subsection{Restricciones, supuestos y condiciones del negocio}
 \hint{Una restricción viene impuesta: el equipo no la decide. Un supuesto es algo que creen cierto pero no han comprobado. Si una fila habla de tiempos de respuesta o de carga, probablemente es un escenario (2.5).}
 \noindent\begin{tabularx}{\linewidth}{|p{3.6cm}|Y|Y|}\hline
   \headrow\hd{Tipo} & \hd{Enunciado} & \hd{Qué pasa si cambia o resulta falso}\\\hline
-  \small Restricción & \ph{[…]} & \ph{[…]}\\\hline
-  \small Supuesto & \ph{[…]} & \ph{[…]}\\\hline
-  \small Objetivo de negocio & \ph{[…]} & \ph{[…]}\\\hline
-  \small Condición organizacional & \ph{[Equipo, calendario, soporte…]} & \ph{[…]}\\\hline
+  \small Restricción & El curso prohíbe el stack web, WebSockets, SignalR, gRPC y REST: la comunicación debe ser con WCF. & Si se permitiera otra tecnología, la capa de comunicación cambiaría, pero los contratos y el servidor como autoridad se conservarían.\\\hline
+  \small Restricción & El lenguaje es C\# sobre .NET; el sistema es una aplicación de escritorio cliente-servidor. & Cambiar de lenguaje o de plataforma invalidaría todas las decisiones tecnológicas.\\\hline
+  \small Restricción & El sistema debe compilar y ejecutarse en macOS arm64 y en Windows, porque cada integrante trabaja en uno de ellos. & Si ambos usaran Windows, volverían a ser viables WCF de .NET Framework y MonoGame WindowsDX, pero no cambiaría la estructura en capas.\\\hline
+  \small Restricción & La base de datos es SQL Server; los datos se guardan en Unicode con la intercalación \texttt{Modern\_Spanish\_100\_CI\_AS\_SC\_UTF8} (D-21). & Otro motor obligaría a reescribir los scripts y a revisar los índices filtrados que garantizan reglas como la de una sola participación sin terminar.\\\hline
+  \small Supuesto & El profesor acepta CoreWCF y EF Core como equivalentes a WCF y a la capa de acceso a datos vistas en clase (pendiente de confirmar, R-01). & Habría que volver a WCF de .NET Framework, lo que deja el servidor solo en Windows, o cambiar el acceso a datos a ADO.NET; los contratos se conservarían.\\\hline
+  \small Supuesto & El juego se usa en una red local o de aula, con decenas de jugadores conectados a la vez y no miles. & Con miles de jugadores, un único servidor con estado en memoria (cola, partidas, espectadores) no bastaría y habría que repartir el estado.\\\hline
+  \small Supuesto & La conexión entre cliente y servidor no está expuesta a un atacante con acceso a la red; el atacante esperado es un jugador con un cliente modificado. & Si la red no es de confianza, \texttt{SecurityMode.None} deja expuestas las credenciales y habría que añadir seguridad de transporte (R-02).\\\hline
+  \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema. & Si el ranking no importara, la validación en el servidor seguiría siendo necesaria para las reglas, pero las transacciones del cierre serían menos críticas.\\\hline
+  \small Objetivo de negocio & Que la economía de monedas y cajas sea confiable y transparente: probabilidades visibles y sin dinero real (CU-38 RN-01, CU-39 RN-01). & Introducir dinero real traería obligaciones legales y de seguridad fuera del alcance del curso.\\\hline
+  \small Condición organizacional & Equipo de dos personas, una en macOS arm64 y otra en Windows, durante el periodo agosto 2026 – enero 2027, con entregas parciales evaluadas. & Con menos tiempo se recortarían funciones de prioridad baja (cajas, espectadores), no la estructura.\\\hline
+  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-07). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
 \end{tabularx}
 
 \subsection{Escenarios de calidad y árbol de utilidad}
