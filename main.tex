@@ -16,6 +16,7 @@
 \usepackage[skins,breakable]{tcolorbox}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta}
+\usepackage{pdflscape}
 \usepackage[colorlinks=true,linkcolor=SADBlue,urlcolor=SADBlue]{hyperref}
 
 \renewcommand{\familydefault}{\sfdefault}
@@ -1009,184 +1010,245 @@ Las cinco interfaces van en orden de prioridad.
   \frow{Tipo de vista}{Ejecución}
   \frow{Para quién y para qué}{Para el equipo: seguir, componente por componente, cómo dos búsquedas se convierten en una partida guardada y avisada; para el profesor: comprobar que la partida se crea en el servidor (ADR-001) y que nunca queda a medias (ASR-05, CU-09 RN-08).}
   \frow{Preocupaciones que atiende}{Interacción entre C-01, C-09, C-03, C-04, C-05, C-06 y C-07 en CU-09 · Buscar partida clasificatoria; el estado compartido en memoria (la cola) y en la base; qué pasa si la base falla al guardar la partida.}
-  \frow{Notación y leyenda}{UML 2 de secuencia; cada línea de vida es un componente de la tabla 4.1. Flecha continua con punta llena: llamada que espera respuesta; continua con punta abierta: llamada de una vía; discontinua: respuesta. Se omiten las respuestas que no llevan datos. Antes de buscar, cada jugador ya inició sesión y abrió su canal de avisos. Los pasos 1 a 11 los hace cada jugador desde su cliente, y los avisos 22 y 26 llegan a los dos.}
+  \frow{Notación y leyenda}{UML 2 de secuencia; cada línea de vida es un componente de la tabla 4.1. Flecha continua con punta llena: llamada que espera respuesta; continua con punta abierta: llamada de una vía; discontinua: respuesta. Se omiten las respuestas que no llevan datos. Antes de buscar, cada jugador ya inició sesión y abrió su canal de avisos. Los pasos 1 a 11 los hace cada jugador desde su cliente, y los avisos 22 y 26 llegan a los dos. El diagrama va en dos páginas horizontales: la búsqueda (pasos 1 a 11) y el emparejamiento con su resultado (pasos 12 a 26).}
   \frow{Se corresponde con}{V-02: cada línea de vida es un recuadro de V-02; la tabla 4.2: los pasos 2 a 11 siguen el contrato de \texttt{IMatchmakingService}, los pasos 22 y 26 el del canal dúplex de avisos y los pasos 18 a 20 y 24 el de \texttt{IMatchRepository}.}
 \end{ficha}
-\begin{center}
+
+\begin{landscape}
+\centering
+{\footnotesize\textbf{V-05, parte 1 de 2:} la búsqueda, pasos 1 a 11.}\par\smallskip
 \begin{tikzpicture}[
-  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.15cm, minimum height=0.8cm, align=center, font=\scriptsize, inner sep=1pt},
+  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.6cm, minimum height=0.95cm, align=center, font=\scriptsize, inner sep=3pt},
   call/.style={draw=black, -{Stealth[length=2mm]}},
   async/.style={draw=black, -{Straight Barb[length=2mm]}},
   reply/.style={draw=black, dashed, -{Straight Barb[length=2mm]}},
   lbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
-  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2pt, anchor=north west},
-  guard/.style={font=\scriptsize, fill=white, inner sep=1pt, anchor=north west}]
-  \draw[SADGray, dashed] (1.15,-0.40) -- (1.15,-16.74);
-  \draw[SADGray, dashed] (3.60,-0.40) -- (3.60,-16.74);
-  \draw[SADGray, dashed] (6.05,-0.40) -- (6.05,-16.74);
-  \draw[SADGray, dashed] (8.50,-0.40) -- (8.50,-16.74);
-  \draw[SADGray, dashed] (10.95,-0.40) -- (10.95,-16.74);
-  \draw[SADGray, dashed] (13.40,-0.40) -- (13.40,-16.74);
-  \draw[SADGray, dashed] (15.85,-0.40) -- (15.85,-16.74);
-  \node[head] at (1.15,0) {C-01\\\textbf{Client}};
-  \node[head] at (3.60,0) {C-09\\\textbf{Client.Networking}};
-  \node[head] at (6.05,0) {C-03\\\textbf{Server.Host}};
-  \node[head] at (8.50,0) {C-04\\\textbf{Server.Application}};
-  \node[head] at (10.95,0) {C-05\\\textbf{Domain}};
-  \node[head] at (13.40,0) {C-06\\\textbf{Server.Adapters}};
-  \node[head] at (15.85,0) {C-07\\\textbf{Base de datos}};
-  \draw[call] (1.15,-1.57) -- (3.60,-1.57);
-  \node[lbl, anchor=south west] at (1.27,-1.54) {1: \texttt{StartSearch(token)}};
-  \draw[call] (3.60,-2.03) -- (6.05,-2.03);
-  \node[lbl, anchor=south] at (4.83,-2.00) {2: \texttt{StartSearch(token)} · net.tcp + TLS};
-  \draw[call] (6.05,-2.49) -- (8.50,-2.49);
-  \node[lbl, anchor=south] at (7.28,-2.46) {3: \texttt{StartSearch(token, now)}};
-  \draw[call] (8.50,-2.95) -- (13.40,-2.95);
-  \node[lbl, anchor=south] at (10.95,-2.92) {4: \texttt{Verify}: busca la sesión y la cuenta};
-  \draw[call] (13.40,-3.41) -- (15.85,-3.41);
-  \node[lbl, anchor=south east] at (15.73,-3.38) {5: SELECT Session, Account};
-  \draw[call] (8.50,-3.87) -- (6.05,-3.87);
-  \node[lbl, anchor=south] at (7.28,-3.84) {6: \texttt{HasNotificationChannel}};
-  \draw[call] (8.50,-4.33) -- (13.40,-4.33);
-  \node[lbl, anchor=south] at (10.95,-4.30) {7: \texttt{HasUnfinishedParticipation}};
-  \draw[call] (13.40,-4.79) -- (15.85,-4.79);
-  \node[lbl, anchor=south east] at (15.73,-4.76) {8: SELECT Participation};
-  \draw[call] (8.50,-5.25) -- ++(0.35,0) -- ++(0,-0.28) -- ++(-0.35,0);
-  \node[lbl, anchor=west] at (8.92,-5.39) {9: \texttt{TryAdd}: entra a la cola en memoria};
-  \draw[reply] (6.05,-5.99) -- (3.60,-5.99);
-  \node[lbl, anchor=south] at (4.83,-5.96) {10: respuesta vacía};
-  \draw[reply] (3.60,-6.45) -- (1.15,-6.45);
-  \node[lbl, anchor=south west] at (1.27,-6.42) {11: muestra «buscando»};
-  \draw[SADNavy] (0.00,-0.83) rectangle (17.10,-6.75);
-  \node[op] (op) at (0.00,-0.83) {loop};
-  \node[guard, anchor=west] at ([xshift=2pt]op.east) {[para A y para B: cada jugador, desde su cliente]};
-  \draw[call] (6.05,-7.79) -- (8.50,-7.79);
-  \node[lbl, anchor=south] at (7.28,-7.76) {12: \texttt{ReviewAndNotify(now)}};
-  \draw[call] (8.50,-8.25) -- ++(0.35,0) -- ++(0,-0.28) -- ++(-0.35,0);
-  \node[lbl, anchor=west] at (8.92,-8.39) {13: \texttt{Review}: empareja a A y B por orden de llegada};
-  \draw[call] (8.50,-8.99) -- (13.40,-8.99);
-  \node[lbl, anchor=south] at (10.95,-8.96) {14: \texttt{FindActiveGameMode}, elos de A y B};
-  \draw[call] (13.40,-9.45) -- (15.85,-9.45);
-  \node[lbl, anchor=south east] at (15.73,-9.42) {15: SELECT GameMode, ModeStatistic};
-  \draw[call] (8.50,-9.91) -- (13.40,-9.91);
-  \node[lbl, anchor=south] at (10.95,-9.88) {16: \texttt{ShuffleTurnOrder}: turnos al azar};
-  \draw[call] (8.50,-10.37) -- (10.95,-10.37);
-  \node[lbl, anchor=south] at (9.72,-10.34) {17: \texttt{Match.StartRanked}};
-  \draw[call] (8.50,-10.83) -- (13.40,-10.83);
-  \node[lbl, anchor=south] at (10.95,-10.80) {18: \texttt{SaveMatch(match)}};
-  \draw[call] (13.40,-11.29) -- (15.85,-11.29);
-  \node[lbl, anchor=south east] at (15.73,-11.26) {19: INSERT Match y Participation, en una transacción};
-  \draw[reply] (13.40,-12.37) -- (8.50,-12.37);
-  \node[lbl, anchor=south] at (10.95,-12.34) {20: \texttt{matchId}};
-  \draw[call] (8.50,-12.83) -- (6.05,-12.83);
-  \node[lbl, anchor=south] at (7.28,-12.80) {21: \texttt{NotifyMatchFound}};
-  \draw[async] (6.05,-13.29) -- (3.60,-13.29);
-  \node[lbl, anchor=south] at (4.83,-13.26) {22: \texttt{ReceiveNotification(MatchFound)}, a A y a B};
-  \draw[call] (3.60,-13.75) -- (1.15,-13.75);
-  \node[lbl, anchor=south west] at (1.27,-13.72) {23: evento \texttt{MatchFound}: pantalla VS};
-  \draw[reply] (13.40,-14.87) -- (8.50,-14.87);
-  \node[lbl, anchor=south] at (10.95,-14.84) {24: \texttt{MatchRepositoryException}};
-  \draw[call] (8.50,-15.33) -- (6.05,-15.33);
-  \node[lbl, anchor=south] at (7.28,-15.30) {25: \texttt{NotifySearchEnded(MatchCreationFailed)}};
-  \draw[async] (6.05,-15.79) -- (3.60,-15.79);
-  \node[lbl, anchor=south] at (4.83,-15.76) {26: \texttt{ReceiveNotification(SearchEnded)}, a A y a B};
-  \draw[SADNavy] (0.15,-11.63) rectangle (16.95,-16.09);
-  \node[op] (op) at (0.15,-11.63) {alt};
-  \node[guard, anchor=west] at ([xshift=2pt]op.east) {[se guardó]};
-  \draw[SADNavy, dashed] (0.15,-14.05) -- (16.95,-14.05);
-  \node[guard] at (0.23,-14.10) {[falla la base]};
-  \draw[SADNavy] (0.00,-7.05) rectangle (17.10,-16.39);
-  \node[op] (op) at (0.00,-7.05) {loop};
-  \node[guard, anchor=west] at ([xshift=2pt]op.east) {[cada 1 s: \texttt{MatchmakingBackgroundService}]};
+  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2.5pt, anchor=north west},
+  guard/.style={font=\scriptsize, fill=white, inner sep=1.5pt, anchor=north west}]
+  \draw[SADGray, dashed] (1.30,-0.48) -- (1.30,-10.75);
+  \draw[SADGray, dashed] (4.73,-0.48) -- (4.73,-10.75);
+  \draw[SADGray, dashed] (8.16,-0.48) -- (8.16,-10.75);
+  \draw[SADGray, dashed] (11.59,-0.48) -- (11.59,-10.75);
+  \draw[SADGray, dashed] (15.02,-0.48) -- (15.02,-10.75);
+  \draw[SADGray, dashed] (18.45,-0.48) -- (18.45,-10.75);
+  \draw[SADGray, dashed] (21.88,-0.48) -- (21.88,-10.75);
+  \node[head] at (1.30,0) {C-01\\\textbf{Client}};
+  \node[head] at (4.73,0) {C-09\\\textbf{Client.Networking}};
+  \node[head] at (8.16,0) {C-03\\\textbf{Server.Host}};
+  \node[head] at (11.59,0) {C-04\\\textbf{Server.Application}};
+  \node[head] at (15.02,0) {C-05\\\textbf{Domain}};
+  \node[head] at (18.45,0) {C-06\\\textbf{Server.Adapters}};
+  \node[head] at (21.88,0) {C-07\\\textbf{Base de datos}};
+  \draw[call] (1.30,-1.99) -- (4.73,-1.99);
+  \node[lbl, anchor=south west, align=left] at (1.50,-1.86) {1: \texttt{StartSearch(token)}};
+  \draw[call] (4.73,-2.97) -- (8.16,-2.97);
+  \node[lbl, anchor=south, align=center] at (6.45,-2.84) {2: \texttt{StartSearch(token)}\\por net.tcp + TLS};
+  \draw[call] (8.16,-3.95) -- (11.59,-3.95);
+  \node[lbl, anchor=south, align=center] at (9.88,-3.82) {3: \texttt{StartSearch}\\\texttt{(token, now)}};
+  \draw[call] (11.59,-4.59) -- (18.45,-4.59);
+  \node[lbl, anchor=south, align=center] at (15.02,-4.46) {4: \texttt{Verify}: busca la sesión y la cuenta};
+  \draw[call] (18.45,-5.57) -- (21.88,-5.57);
+  \node[lbl, anchor=south east, align=right] at (21.68,-5.44) {5: SELECT Session,\\Account};
+  \draw[call] (11.59,-6.21) -- (8.16,-6.21);
+  \node[lbl, anchor=south, align=center] at (9.88,-6.08) {6: \texttt{HasNotificationChannel}};
+  \draw[call] (11.59,-6.85) -- (18.45,-6.85);
+  \node[lbl, anchor=south, align=center] at (15.02,-6.72) {7: \texttt{HasUnfinishedParticipation}};
+  \draw[call] (18.45,-7.83) -- (21.88,-7.83);
+  \node[lbl, anchor=south east, align=right] at (21.68,-7.70) {8: SELECT\\Participation};
+  \draw[call] (11.59,-8.37) -- ++(0.50,0) -- ++(0,-0.42) -- ++(-0.50,0);
+  \node[lbl, anchor=west, align=left] at (12.19,-8.58) {9: \texttt{TryAdd}: entra a la cola en memoria};
+  \draw[reply] (8.16,-9.43) -- (4.73,-9.43);
+  \node[lbl, anchor=south, align=center] at (6.45,-9.30) {10: respuesta vacía};
+  \draw[reply] (4.73,-10.07) -- (1.30,-10.07);
+  \node[lbl, anchor=south west, align=left] at (1.50,-9.94) {11: muestra «buscando»};
+  \draw[SADNavy] (0.00,-1.09) rectangle (23.18,-10.45);
+  \node[op] (op) at (0.00,-1.09) {loop};
+  \node[guard, anchor=west] at ([xshift=3pt]op.east) {[para A y para B: cada jugador, desde su cliente]};
 \end{tikzpicture}
-\end{center}
+\end{landscape}
 
-\newpage
+\begin{landscape}
+\centering
+{\footnotesize\textbf{V-05, parte 2 de 2:} el emparejamiento y su resultado, pasos 12 a 26.}\par\smallskip
+\begin{tikzpicture}[
+  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.6cm, minimum height=0.95cm, align=center, font=\scriptsize, inner sep=3pt},
+  call/.style={draw=black, -{Stealth[length=2mm]}},
+  async/.style={draw=black, -{Straight Barb[length=2mm]}},
+  reply/.style={draw=black, dashed, -{Straight Barb[length=2mm]}},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
+  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2.5pt, anchor=north west},
+  guard/.style={font=\scriptsize, fill=white, inner sep=1.5pt, anchor=north west}]
+  \draw[SADGray, dashed] (1.30,-0.48) -- (1.30,-15.83);
+  \draw[SADGray, dashed] (4.73,-0.48) -- (4.73,-15.83);
+  \draw[SADGray, dashed] (8.16,-0.48) -- (8.16,-15.83);
+  \draw[SADGray, dashed] (11.59,-0.48) -- (11.59,-15.83);
+  \draw[SADGray, dashed] (15.02,-0.48) -- (15.02,-15.83);
+  \draw[SADGray, dashed] (18.45,-0.48) -- (18.45,-15.83);
+  \draw[SADGray, dashed] (21.88,-0.48) -- (21.88,-15.83);
+  \node[head] at (1.30,0) {C-01\\\textbf{Client}};
+  \node[head] at (4.73,0) {C-09\\\textbf{Client.Networking}};
+  \node[head] at (8.16,0) {C-03\\\textbf{Server.Host}};
+  \node[head] at (11.59,0) {C-04\\\textbf{Server.Application}};
+  \node[head] at (15.02,0) {C-05\\\textbf{Domain}};
+  \node[head] at (18.45,0) {C-06\\\textbf{Server.Adapters}};
+  \node[head] at (21.88,0) {C-07\\\textbf{Base de datos}};
+  \draw[call] (8.16,-1.99) -- (11.59,-1.99);
+  \node[lbl, anchor=south, align=center] at (9.88,-1.86) {12: \texttt{ReviewAndNotify(now)}};
+  \draw[call] (11.59,-2.53) -- ++(0.50,0) -- ++(0,-0.42) -- ++(-0.50,0);
+  \node[lbl, anchor=west, align=left] at (12.19,-2.74) {13: \texttt{Review}: empareja a A y B por orden de llegada};
+  \draw[call] (11.59,-3.59) -- (18.45,-3.59);
+  \node[lbl, anchor=south, align=center] at (15.02,-3.46) {14: \texttt{FindActiveGameMode}, elos de A y B};
+  \draw[call] (18.45,-4.57) -- (21.88,-4.57);
+  \node[lbl, anchor=south east, align=right] at (21.68,-4.44) {15: SELECT GameMode,\\ModeStatistic};
+  \draw[call] (11.59,-5.21) -- (18.45,-5.21);
+  \node[lbl, anchor=south, align=center] at (15.02,-5.08) {16: \texttt{ShuffleTurnOrder}: turnos al azar};
+  \draw[call] (11.59,-5.85) -- (15.02,-5.85);
+  \node[lbl, anchor=south, align=center] at (13.31,-5.72) {17: \texttt{Match.StartRanked}};
+  \draw[call] (11.59,-6.49) -- (18.45,-6.49);
+  \node[lbl, anchor=south, align=center] at (15.02,-6.36) {18: \texttt{SaveMatch(match)}};
+  \draw[call] (18.45,-7.81) -- (21.88,-7.81);
+  \node[lbl, anchor=south east, align=right] at (21.68,-7.68) {19: INSERT Match y\\Participation, en una\\transacción};
+  \draw[reply] (18.45,-9.19) -- (11.59,-9.19);
+  \node[lbl, anchor=south, align=center] at (15.02,-9.06) {20: \texttt{matchId}};
+  \draw[call] (11.59,-9.83) -- (8.16,-9.83);
+  \node[lbl, anchor=south, align=center] at (9.88,-9.70) {21: \texttt{NotifyMatchFound}};
+  \draw[async] (8.16,-10.81) -- (4.73,-10.81);
+  \node[lbl, anchor=south, align=center] at (6.45,-10.68) {22: \texttt{ReceiveNotification}\\\texttt{(MatchFound)}, a A y a B};
+  \draw[call] (4.73,-11.45) -- (1.30,-11.45);
+  \node[lbl, anchor=south west, align=left] at (1.50,-11.32) {23: evento \texttt{MatchFound}: pantalla VS};
+  \draw[reply] (18.45,-12.81) -- (11.59,-12.81);
+  \node[lbl, anchor=south, align=center] at (15.02,-12.68) {24: \texttt{MatchRepositoryException}};
+  \draw[call] (11.59,-13.79) -- (8.16,-13.79);
+  \node[lbl, anchor=south, align=center] at (9.88,-13.66) {25: \texttt{NotifySearchEnded}\\\texttt{(MatchCreationFailed)}};
+  \draw[async] (8.16,-14.77) -- (4.73,-14.77);
+  \node[lbl, anchor=south, align=center] at (6.45,-14.64) {26: \texttt{ReceiveNotification}\\\texttt{(SearchEnded)}, a A y a B};
+  \draw[SADNavy] (0.16,-8.29) rectangle (23.02,-15.15);
+  \node[op] (op) at (0.16,-8.29) {alt};
+  \node[guard, anchor=west] at ([xshift=3pt]op.east) {[se guardó]};
+  \draw[SADNavy, dashed] (0.16,-11.83) -- (23.02,-11.83);
+  \node[guard] at (0.26,-11.91) {[falla la base]};
+  \draw[SADNavy] (0.00,-1.09) rectangle (23.18,-15.53);
+  \node[op] (op) at (0.00,-1.09) {loop};
+  \node[guard, anchor=west] at ([xshift=3pt]op.east) {[cada 1 s: \texttt{MatchmakingBackgroundService}]};
+\end{tikzpicture}
+\end{landscape}
+
 \begin{ficha}{V-06 · Hacer una jugada}
   \frow{Tipo de vista}{Ejecución}
   \frow{Para quién y para qué}{Para el equipo: ver qué componente valida, guarda y avisa una jugada; para el profesor: comprobar que el servidor es la autoridad (ASR-01), que la jugada se guarda antes de avisarse (ASR-05, R-04) y por qué componentes pasa el tiempo que mide QAS-03.}
   \frow{Preocupaciones que atiende}{Interacción entre C-01, C-09, C-03, C-04, C-05, C-06 y C-07 en CU-13 · Mover el peón; la validación en el servidor con las reglas de C-05; el orden entre guardar y avisar; el rechazo de una jugada fuera de turno o ilegal.}
-  \frow{Notación y leyenda}{La misma de V-05. El ejemplo mueve el peón; colocar un muro (CU-14) sigue los mismos pasos con \texttt{PlaceWall}, \texttt{FindWallRejection} y el aviso \texttt{WallPlaced}. El paso 1 ocurre dentro del cliente y solo marca las casillas posibles. El aviso 18 llega a todos los participantes, incluido quien movió: su cliente aplica la jugada cuando lo recibe (paso 19), no al enviarla.}
+  \frow{Notación y leyenda}{La misma de V-05. El ejemplo mueve el peón; colocar un muro (CU-14) sigue los mismos pasos con \texttt{PlaceWall}, \texttt{FindWallRejection} y el aviso \texttt{WallPlaced}. El paso 1 ocurre dentro del cliente y solo marca las casillas posibles. El aviso 18 llega a todos los participantes, incluido quien movió: su cliente aplica la jugada cuando lo recibe (paso 19), no al enviarla. El diagrama va en dos páginas horizontales: el envío y la validación (pasos 1 a 13) y el resultado (pasos 14 a 24).}
   \frow{Se corresponde con}{V-02: cada línea de vida es un recuadro de V-02; V-05: la partida que crea V-05 es la que recibe esta jugada; la tabla 4.2: los pasos 3 a 5 y 20 a 24 siguen el contrato de \texttt{IMatchService}, el paso 18 el del canal dúplex de avisos y los pasos 8, 9, 15 y 16 el de \texttt{IMatchRepository}.}
 \end{ficha}
-\begin{center}
+
+\begin{landscape}
+\centering
+{\footnotesize\textbf{V-06, parte 1 de 2:} el envío y la validación, pasos 1 a 13.}\par\smallskip
 \begin{tikzpicture}[
-  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.15cm, minimum height=0.8cm, align=center, font=\scriptsize, inner sep=1pt},
+  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.6cm, minimum height=0.95cm, align=center, font=\scriptsize, inner sep=3pt},
   call/.style={draw=black, -{Stealth[length=2mm]}},
   async/.style={draw=black, -{Straight Barb[length=2mm]}},
   reply/.style={draw=black, dashed, -{Straight Barb[length=2mm]}},
   lbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
-  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2pt, anchor=north west},
-  guard/.style={font=\scriptsize, fill=white, inner sep=1pt, anchor=north west}]
-  \draw[SADGray, dashed] (1.15,-0.40) -- (1.15,-13.46);
-  \draw[SADGray, dashed] (3.60,-0.40) -- (3.60,-13.46);
-  \draw[SADGray, dashed] (6.05,-0.40) -- (6.05,-13.46);
-  \draw[SADGray, dashed] (8.50,-0.40) -- (8.50,-13.46);
-  \draw[SADGray, dashed] (10.95,-0.40) -- (10.95,-13.46);
-  \draw[SADGray, dashed] (13.40,-0.40) -- (13.40,-13.46);
-  \draw[SADGray, dashed] (15.85,-0.40) -- (15.85,-13.46);
-  \node[head] at (1.15,0) {C-01\\\textbf{Client}};
-  \node[head] at (3.60,0) {C-09\\\textbf{Client.Networking}};
-  \node[head] at (6.05,0) {C-03\\\textbf{Server.Host}};
-  \node[head] at (8.50,0) {C-04\\\textbf{Server.Application}};
-  \node[head] at (10.95,0) {C-05\\\textbf{Domain}};
-  \node[head] at (13.40,0) {C-06\\\textbf{Server.Adapters}};
-  \node[head] at (15.85,0) {C-07\\\textbf{Base de datos}};
-  \draw[call] (1.15,-0.95) -- (10.95,-0.95);
-  \node[lbl, anchor=south west] at (1.27,-0.92) {1: \texttt{ListReachableSquares}: marca las casillas};
-  \draw[reply] (10.95,-1.41) -- (1.15,-1.41);
-  \node[lbl, anchor=south west] at (1.27,-1.38) {2: casillas alcanzables};
-  \draw[call] (1.15,-1.87) -- (3.60,-1.87);
-  \node[lbl, anchor=south west] at (1.27,-1.84) {3: \texttt{MovePawn(token, ChosenPawnMove)}};
-  \draw[call] (3.60,-2.33) -- (6.05,-2.33);
-  \node[lbl, anchor=south] at (4.83,-2.30) {4: \texttt{MovePawn(token, PawnMove)} · net.tcp + TLS};
-  \draw[call] (6.05,-2.79) -- (8.50,-2.79);
-  \node[lbl, anchor=south] at (7.28,-2.76) {5: \texttt{MovePawn(token, jugada, now)}};
-  \draw[call] (8.50,-3.25) -- (13.40,-3.25);
-  \node[lbl, anchor=south] at (10.95,-3.22) {6: \texttt{Verify}: busca la sesión y la cuenta};
-  \draw[call] (13.40,-3.71) -- (15.85,-3.71);
-  \node[lbl, anchor=south east] at (15.73,-3.68) {7: SELECT Session, Account};
-  \draw[call] (8.50,-4.17) -- (13.40,-4.17);
-  \node[lbl, anchor=south] at (10.95,-4.14) {8: \texttt{FindMatch(matchId)}};
-  \draw[call] (13.40,-4.63) -- (15.85,-4.63);
-  \node[lbl, anchor=south east] at (15.73,-4.60) {9: SELECT Match, Participation, Move};
-  \draw[call] (8.50,-5.09) -- (10.95,-5.09);
-  \node[lbl, anchor=south] at (9.72,-5.06) {10: \texttt{IsTurnOf}, \texttt{GetNextMoveNumber}};
-  \draw[call] (8.50,-5.55) -- (13.40,-5.55);
-  \node[lbl, anchor=south] at (10.95,-5.52) {11: \texttt{FindGameMode}};
-  \draw[call] (13.40,-6.01) -- (15.85,-6.01);
-  \node[lbl, anchor=south east] at (15.73,-5.98) {12: SELECT GameMode};
-  \draw[call] (8.50,-6.47) -- (10.95,-6.47);
-  \node[lbl, anchor=south] at (9.72,-6.44) {13: \texttt{ListReachableSquares}};
-  \draw[call] (8.50,-7.55) -- (10.95,-7.55);
-  \node[lbl, anchor=south] at (9.72,-7.52) {14: \texttt{MovePawn}: mueve, pasa el turno y descuenta el reloj};
-  \draw[call] (8.50,-8.01) -- (13.40,-8.01);
-  \node[lbl, anchor=south] at (10.95,-7.98) {15: \texttt{SaveMove(match)}};
-  \draw[call] (13.40,-8.47) -- (15.85,-8.47);
-  \node[lbl, anchor=south east] at (15.73,-8.44) {16: INSERT Move; UPDATE Match, Participation};
-  \draw[call] (8.50,-8.93) -- (6.05,-8.93);
-  \node[lbl, anchor=south] at (7.28,-8.90) {17: \texttt{NotifyPawnMoved}};
-  \draw[async] (6.05,-9.39) -- (3.60,-9.39);
-  \node[lbl, anchor=south] at (4.83,-9.36) {18: \texttt{ReceiveNotification(PawnMoved)}, a cada participante};
-  \draw[call] (3.60,-9.85) -- (1.15,-9.85);
-  \node[lbl, anchor=south west] at (1.27,-9.82) {19: evento \texttt{PawnMoved}: mueve el peón y pasa el turno};
-  \draw[reply] (6.05,-10.31) -- (3.60,-10.31);
-  \node[lbl, anchor=south] at (4.83,-10.28) {20: respuesta vacía};
-  \draw[reply] (3.60,-10.77) -- (1.15,-10.77);
-  \node[lbl, anchor=south west] at (1.27,-10.74) {21: termina el envío};
-  \draw[reply] (8.50,-11.89) -- (6.05,-11.89);
-  \node[lbl, anchor=south] at (7.28,-11.86) {22: \texttt{NotYourTurnException} o \texttt{IllegalMoveException}};
-  \draw[reply] (6.05,-12.35) -- (3.60,-12.35);
-  \node[lbl, anchor=south] at (4.83,-12.32) {23: \texttt{NotYourTurnFault} o \texttt{IllegalMoveFault}};
-  \draw[reply] (3.60,-12.81) -- (1.15,-12.81);
-  \node[lbl, anchor=south west] at (1.27,-12.78) {24: excepción del cliente: resincroniza el turno o avisa};
-  \draw[SADNavy] (0.00,-6.81) rectangle (17.10,-13.11);
-  \node[op] (op) at (0.00,-6.81) {alt};
-  \node[guard, anchor=west] at ([xshift=2pt]op.east) {[turno, número de jugada y casilla válidos]};
-  \draw[SADNavy, dashed] (0.00,-11.07) -- (17.10,-11.07);
-  \node[guard] at (0.08,-11.12) {[no es su turno, el número no coincide o la casilla no es alcanzable]};
+  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2.5pt, anchor=north west},
+  guard/.style={font=\scriptsize, fill=white, inner sep=1.5pt, anchor=north west}]
+  \draw[SADGray, dashed] (1.30,-0.48) -- (1.30,-11.61);
+  \draw[SADGray, dashed] (4.73,-0.48) -- (4.73,-11.61);
+  \draw[SADGray, dashed] (8.16,-0.48) -- (8.16,-11.61);
+  \draw[SADGray, dashed] (11.59,-0.48) -- (11.59,-11.61);
+  \draw[SADGray, dashed] (15.02,-0.48) -- (15.02,-11.61);
+  \draw[SADGray, dashed] (18.45,-0.48) -- (18.45,-11.61);
+  \draw[SADGray, dashed] (21.88,-0.48) -- (21.88,-11.61);
+  \node[head] at (1.30,0) {C-01\\\textbf{Client}};
+  \node[head] at (4.73,0) {C-09\\\textbf{Client.Networking}};
+  \node[head] at (8.16,0) {C-03\\\textbf{Server.Host}};
+  \node[head] at (11.59,0) {C-04\\\textbf{Server.Application}};
+  \node[head] at (15.02,0) {C-05\\\textbf{Domain}};
+  \node[head] at (18.45,0) {C-06\\\textbf{Server.Adapters}};
+  \node[head] at (21.88,0) {C-07\\\textbf{Base de datos}};
+  \draw[call] (1.30,-1.25) -- (15.02,-1.25);
+  \node[lbl, anchor=south west, align=left] at (1.50,-1.12) {1: \texttt{ListReachableSquares}: marca las casillas};
+  \draw[reply] (15.02,-1.89) -- (1.30,-1.89);
+  \node[lbl, anchor=south west, align=left] at (1.50,-1.76) {2: casillas alcanzables};
+  \draw[call] (1.30,-2.87) -- (4.73,-2.87);
+  \node[lbl, anchor=south west, align=left] at (1.50,-2.74) {3: \texttt{MovePawn(token,}\\\texttt{ChosenPawnMove)}};
+  \draw[call] (4.73,-4.19) -- (8.16,-4.19);
+  \node[lbl, anchor=south, align=center] at (6.45,-4.06) {4: \texttt{MovePawn(token,}\\\texttt{PawnMove)}\\por net.tcp + TLS};
+  \draw[call] (8.16,-5.17) -- (11.59,-5.17);
+  \node[lbl, anchor=south, align=center] at (9.88,-5.04) {5: \texttt{MovePawn}\\\texttt{(token, jugada, now)}};
+  \draw[call] (11.59,-5.81) -- (18.45,-5.81);
+  \node[lbl, anchor=south, align=center] at (15.02,-5.68) {6: \texttt{Verify}: busca la sesión y la cuenta};
+  \draw[call] (18.45,-6.79) -- (21.88,-6.79);
+  \node[lbl, anchor=south east, align=right] at (21.68,-6.66) {7: SELECT Session,\\Account};
+  \draw[call] (11.59,-7.43) -- (18.45,-7.43);
+  \node[lbl, anchor=south, align=center] at (15.02,-7.30) {8: \texttt{FindMatch(matchId)}};
+  \draw[call] (18.45,-8.41) -- (21.88,-8.41);
+  \node[lbl, anchor=south east, align=right] at (21.68,-8.28) {9: SELECT Match,\\Participation, Move};
+  \draw[call] (11.59,-9.39) -- (15.02,-9.39);
+  \node[lbl, anchor=south, align=center] at (13.31,-9.26) {10: \texttt{IsTurnOf},\\\texttt{GetNextMoveNumber}};
+  \draw[call] (11.59,-10.03) -- (18.45,-10.03);
+  \node[lbl, anchor=south, align=center] at (15.02,-9.90) {11: \texttt{FindGameMode}};
+  \draw[call] (18.45,-10.67) -- (21.88,-10.67);
+  \node[lbl, anchor=south east, align=right] at (21.68,-10.54) {12: SELECT GameMode};
+  \draw[call] (11.59,-11.31) -- (15.02,-11.31);
+  \node[lbl, anchor=south, align=center] at (13.31,-11.18) {13: \texttt{ListReachableSquares}};
 \end{tikzpicture}
-\end{center}
+\end{landscape}
+
+\begin{landscape}
+\centering
+{\footnotesize\textbf{V-06, parte 2 de 2:} el resultado, pasos 14 a 24.}\par\smallskip
+\begin{tikzpicture}[
+  head/.style={draw=SADNavy, fill=SADHead, minimum width=2.6cm, minimum height=0.95cm, align=center, font=\scriptsize, inner sep=3pt},
+  call/.style={draw=black, -{Stealth[length=2mm]}},
+  async/.style={draw=black, -{Straight Barb[length=2mm]}},
+  reply/.style={draw=black, dashed, -{Straight Barb[length=2mm]}},
+  lbl/.style={font=\scriptsize, fill=white, inner sep=1pt},
+  op/.style={draw=SADNavy, fill=SADHead, font=\scriptsize\bfseries, inner sep=2.5pt, anchor=north west},
+  guard/.style={font=\scriptsize, fill=white, inner sep=1.5pt, anchor=north west}]
+  \draw[SADGray, dashed] (1.30,-0.48) -- (1.30,-13.87);
+  \draw[SADGray, dashed] (4.73,-0.48) -- (4.73,-13.87);
+  \draw[SADGray, dashed] (8.16,-0.48) -- (8.16,-13.87);
+  \draw[SADGray, dashed] (11.59,-0.48) -- (11.59,-13.87);
+  \draw[SADGray, dashed] (15.02,-0.48) -- (15.02,-13.87);
+  \draw[SADGray, dashed] (18.45,-0.48) -- (18.45,-13.87);
+  \draw[SADGray, dashed] (21.88,-0.48) -- (21.88,-13.87);
+  \node[head] at (1.30,0) {C-01\\\textbf{Client}};
+  \node[head] at (4.73,0) {C-09\\\textbf{Client.Networking}};
+  \node[head] at (8.16,0) {C-03\\\textbf{Server.Host}};
+  \node[head] at (11.59,0) {C-04\\\textbf{Server.Application}};
+  \node[head] at (15.02,0) {C-05\\\textbf{Domain}};
+  \node[head] at (18.45,0) {C-06\\\textbf{Server.Adapters}};
+  \node[head] at (21.88,0) {C-07\\\textbf{Base de datos}};
+  \draw[call] (11.59,-2.67) -- (15.02,-2.67);
+  \node[lbl, anchor=south, align=center] at (13.31,-2.54) {14: \texttt{MovePawn}: mueve,\\pasa el turno y\\descuenta el reloj};
+  \draw[call] (11.59,-3.31) -- (18.45,-3.31);
+  \node[lbl, anchor=south, align=center] at (15.02,-3.18) {15: \texttt{SaveMove(match)}};
+  \draw[call] (18.45,-4.63) -- (21.88,-4.63);
+  \node[lbl, anchor=south east, align=right] at (21.68,-4.50) {16: INSERT Move;\\UPDATE Match,\\Participation};
+  \draw[call] (11.59,-5.27) -- (8.16,-5.27);
+  \node[lbl, anchor=south, align=center] at (9.88,-5.14) {17: \texttt{NotifyPawnMoved}};
+  \draw[async] (8.16,-6.59) -- (4.73,-6.59);
+  \node[lbl, anchor=south, align=center] at (6.45,-6.46) {18: \texttt{ReceiveNotification}\\\texttt{(PawnMoved)}, a cada\\participante};
+  \draw[call] (4.73,-7.91) -- (1.30,-7.91);
+  \node[lbl, anchor=south west, align=left] at (1.50,-7.78) {19: evento \texttt{PawnMoved}:\\mueve el peón y pasa\\el turno};
+  \draw[reply] (8.16,-8.55) -- (4.73,-8.55);
+  \node[lbl, anchor=south, align=center] at (6.45,-8.42) {20: respuesta vacía};
+  \draw[reply] (4.73,-9.19) -- (1.30,-9.19);
+  \node[lbl, anchor=south west, align=left] at (1.50,-9.06) {21: termina el envío};
+  \draw[reply] (11.59,-10.89) -- (8.16,-10.89);
+  \node[lbl, anchor=south, align=center] at (9.88,-10.76) {22: \texttt{NotYourTurnException}\\o \texttt{IllegalMoveException}};
+  \draw[reply] (8.16,-11.87) -- (4.73,-11.87);
+  \node[lbl, anchor=south, align=center] at (6.45,-11.74) {23: \texttt{NotYourTurnFault}\\o \texttt{IllegalMoveFault}};
+  \draw[reply] (4.73,-13.19) -- (1.30,-13.19);
+  \node[lbl, anchor=south west, align=left] at (1.50,-13.06) {24: excepción del cliente:\\resincroniza el turno\\o avisa};
+  \draw[SADNavy] (0.00,-1.09) rectangle (23.18,-13.57);
+  \node[op] (op) at (0.00,-1.09) {alt};
+  \node[guard, anchor=west] at ([xshift=3pt]op.east) {[turno, número de jugada y casilla válidos]};
+  \draw[SADNavy, dashed] (0.00,-9.57) -- (23.18,-9.57);
+  \node[guard] at (0.10,-9.65) {[no es su turno, el número no coincide o la casilla no es alcanzable]};
+\end{tikzpicture}
+\end{landscape}
 
 \newpage
 
