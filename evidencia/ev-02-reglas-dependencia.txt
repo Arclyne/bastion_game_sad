@@ -1,0 +1,33 @@
+EV-02 · Comprobación de conformidad de las reglas de dependencia (sección 4.3)
+Fecha: 25/11/2026
+Código: Arclyne/bastion, commit 63beca6 (PR #41)
+Comando, desde la raíz de este repositorio:
+  python evidencia/reglas_dependencia.py RUTA_DEL_REPOSITORIO_BASTION
+Código de salida: 1 (una regla falla)
+
+Salida:
+Regla 1 · C-05 no depende de nada: PASA
+Regla 2 · C-02 no depende de ningún módulo de Bastión: PASA
+Regla 3 · C-04 depende solo de C-05 y de log4net: PASA
+Regla 4 · Los adaptadores conducidos dependen del núcleo, y nunca al revés: PASA
+Regla 5 · C-03 es la raíz de composición y no usa tipos de acceso a datos: FALLA (13)
+    - AccountService.cs usa Microsoft.EntityFrameworkCore
+    - AccountService.cs usa System.Data.Common
+    - ChatService.cs usa System.Data.Common
+    - FriendPresenceReporter.cs usa Microsoft.EntityFrameworkCore
+    - FriendPresenceReporter.cs usa System.Data.Common
+    - FriendshipService.cs usa Microsoft.EntityFrameworkCore
+    - FriendshipService.cs usa System.Data.Common
+    - MatchService.cs usa System.Data.Common
+    - MatchmakingService.cs usa System.Data.Common
+    - ConversationService.cs usa Microsoft.EntityFrameworkCore
+    - ConversationService.cs usa System.Data.Common
+    - RoomService.cs usa System.Data.Common
+    - SessionService.cs usa System.Data.Common
+Regla 6 · C-01 depende solo de C-09 y C-05: PASA
+Regla 7 · C-09 usa C-02 como referencia privada: PASA
+Regla 8 · Solo C-06 se conecta a C-07: PASA
+Regla 9 · Las pruebas del núcleo no usan C-06 ni C-07: PASA
+Resultado: 8 de 9 reglas pasan.
+
+Lectura: la regla 5 falla en nueve archivos de C-03 (cuatro usan EF Core y nueve System.Data.Common); es el riesgo R-11.

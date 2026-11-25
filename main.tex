@@ -154,7 +154,7 @@
   v0.4 & 16/10/2026 & V-02 pasa a ser la vista de contenedores y paquetes de la solución nueva; se agrega C-09 (\texttt{Bastion.Client.Networking}), el cliente referencia a C-09 y C-05, y C-06 implementa también los puertos de contraseña y token; el núcleo hexagonal queda solo en C-04 y C-05 pasa a ser biblioteca compartida (ADR-008); V-01, reglas de dependencia, glosario y resumen ajustados; se agregan V-03 y V-04 con los componentes UML del servidor y del cliente ya construidos.\\\hline
   v0.5 & 25/10/2026 & Portada actualizada a la versión vigente; el glosario se parte entre páginas para que no se pierdan términos.\\\hline
   v0.6 & 27/10/2026 & Escenarios de calidad revisados contra el libro: cada QAS indica su sub-atributo (ISO 25010, Fig. 14.1) y tiene un nombre descriptivo con interesado, intención y la respuesta del escenario general; se ajustan Fuente, Entorno (primero el tipo de entorno), Artefacto, Respuesta y Medida (solo la meta, en porcentaje y sin mezclar atributos), y las filas de seguridad de QAS-01 y QAS-02; QAS-09 pasa a (M, M) y QAS-11 a (A, B). El árbol de utilidad tiene una fila por atributo y refinamientos por sub-atributo. ASR-01 suma los objetivos de negocio, ASR-02 se expresa en percentil 95 y ASR-06 suma CRN-26. Las ADR se priorizan: seis prioritarias, y ADR-003 y ADR-004 quedan como complementarias (3.3). Se quitan las referencias de tiempo fuera de los escenarios de desempeño.\\\hline
-  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05 y V-06. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo.\\\hline
+  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05 y V-06. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo. Se completan la arquitectura en ejecución (5), la trazabilidad de los ASR (7.1), las evidencias EV-01 (pruebas del núcleo) y EV-02 (script de reglas de dependencia en \texttt{evidencia/}) y la transición a construcción (7.4).\\\hline
 \end{xltabular}
 
 \subsection{Resumen de la arquitectura}
@@ -654,17 +654,20 @@ Las reglas van del núcleo hacia afuera.
 % =====================================================================
 \section{Arquitectura en ejecución\greenbadge{Entrega final}}
 \hint{Cada preocupación tiene una decisión, o un «no aplica» con su razón. No es una lista de tecnologías: toda tecnología mencionada se conecta con un ADR o un ASR.}
-\noindent\begin{tabularx}{\linewidth}{|p{3.4cm}|Y|p{2.4cm}|p{2.6cm}|}\hline
+\begin{xltabular}{\linewidth}{|>{\raggedright\arraybackslash}p{3.4cm}|Y|>{\small\raggedright\arraybackslash}p{2.4cm}|>{\small\raggedright\arraybackslash}p{2.6cm}|}\hline
   \headrow\hd{Preocupación} & \hd{Decisión, o «no aplica porque…»} & \hd{ADR / ASR} & \hd{Vista o evidencia}\\\hline
-  \small\bfseries Distribución y comunicación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Datos, estado y propiedad & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Concurrencia y coordinación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Resiliencia y disponibilidad & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Seguridad y límites de confianza & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Despliegue y entornos & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Observabilidad y operación & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-  \small\bfseries Costo operacional & \ph{[…]} & \ph{[…]} & \ph{[V-\_\_ / EV-\_\_]}\\\hline
-\end{tabularx}
+  \endfirsthead
+  \headrow\hd{Preocupación} & \hd{Decisión, o «no aplica porque…»} & \hd{ADR / ASR} & \hd{Vista o evidencia}\\\hline
+  \endhead
+  \small\bfseries Distribución y comunicación & Un cliente de escritorio y un único servidor. C-09 habla con C-03 por CoreWCF sobre net.tcp con TLS (puerto \texttt{Server:\allowbreak NetTcpPort}, 8000 por omisión), con ocho servicios de petición y respuesta y un canal dúplex por cuenta para los avisos, que salen en una vía sin esperar al cliente. El cliente nunca llega a la base. & ADR-001, ADR-002, ADR-007 / ASR-02 & V-02, V-05, V-06; tabla 4.2\\\hline
+  \small\bfseries Datos, estado y propiedad & C-07 guarda todo lo que debe sobrevivir y solo C-06 lo toca (regla 8); el esquema vive en \texttt{database/}. La cola, las salas en espera, el chat de lobby reciente y los canales viven en memoria en C-04 y C-03, y se acepta perderlos (R-04). El cliente solo guarda el token en memoria y el idioma elegido en un archivo local. & ADR-005, ADR-008 / ASR-05 & V-03; tablas 4.1 y 4.3\\\hline
+  \small\bfseries Concurrencia y coordinación & Las fachadas son \texttt{PerCall} con \texttt{ConcurrencyMode.\allowbreak Multiple}: cada petición tiene su propio ámbito de dependencias. La cola, las salas y el chat de lobby tienen cada uno su candado, y cada partida tiene \texttt{MatchGate}: una sola operación a la vez, incluida la revisión del reloj. La base es la última barrera (\texttt{PK\_Move}, \texttt{UX\_Participation\_\allowbreak Unfinished}). Dos servicios de fondo revisan cada segundo el emparejamiento y los relojes. & ADR-001, ADR-008 / ASR-05 & V-05 (bucle de 1 s), V-06 (paso 5)\\\hline
+  \small\bfseries Resiliencia y disponibilidad & Un solo servidor sin réplicas: se acepta el punto único de falla (R-04). Cada jugada se guarda antes de avisarse y el cierre es una sola escritura; al arrancar, el servidor retoma las partidas y cierra las salas. El cliente reconecta solo, y quien no vuelve en 60 s pierde si queda otro jugador conectado. Una falla de la base no se reintenta: la operación se rechaza entera. & ADR-001, ADR-005 / ASR-05 & V-05 (rama «falla la base»); R-04\\\hline
+  \small\bfseries Seguridad y límites de confianza & Dos límites. Entre cliente y servidor: TLS con la huella del certificado; el servidor es la única autoridad y valida cada petición con el token y las reglas de C-05; contraseñas con PBKDF2 (210\,000 iteraciones), tokens de 32 bytes guardados como SHA-256, bloqueo escalonado y bitácora de accesos. Entre servidor y base: el usuario \texttt{BastionServer\allowbreak Connection} no puede borrar filas ni cambiar el esquema, y la cadena de conexión y el certificado viven fuera del repositorio. & ADR-001, ADR-007 / ASR-01, ASR-04 & V-01; tabla 4.2 (\texttt{LogIn}); R-01, R-13 a R-15\\\hline
+  \small\bfseries Despliegue y entornos & Un proceso \texttt{Bastion.Server.Host} y una instancia de SQL Server 2019 o posterior en la red del aula; cada jugador corre el cliente en macOS arm64 o en Windows. El servidor se configura con los secretos de usuario y \texttt{appsettings.json}; el cliente, con \texttt{BASTION\_\allowbreak SERVER\_\allowbreak HOST}, \texttt{BASTION\_\allowbreak SERVER\_\allowbreak PORT} y \texttt{BASTION\_\allowbreak SERVER\_\allowbreak THUMBPRINT}. Un solo entorno, el de desarrollo de cada integrante, sin nube; nunca \texttt{PublishTrimmed} ni \texttt{PublishAot}. & ADR-002, ADR-003, ADR-005 / ASR-03 & V-02; R-03, R-08\\\hline
+  \small\bfseries Observabilidad y operación & Cliente y servidor registran con log4net en consola y en un archivo rotativo (\texttt{logs/\allowbreak server.log} y \texttt{logs/\allowbreak client.log}, 5 MB, 5 copias, nivel INFO), con mensajes que siguen el §11 del estándar; una excepción que termina el proceso se registra en Fatal. Los intentos de inicio de sesión quedan en \texttt{AccessLog}. No hay métricas ni trazas distribuidas: no aplican a un servidor único en el aula. & — / ASR-04 & R-05 (la latencia se medirá con el prototipo de carga)\\\hline
+  \small\bfseries Costo operacional & No aplica en esta versión: el sistema corre en las máquinas del equipo y del aula, con software sin costo (.NET, MonoGame, CoreWCF, EF Core, log4net y una edición gratuita de SQL Server), sin nube ni servicios de pago. El único costo posible es el proveedor de correo y segundo factor, aún sin elegir. & ADR-003, ADR-005 / — & Q-03, R-07\\\hline
+\end{xltabular}
 
 % =====================================================================
 % 6. Vistas
@@ -1287,35 +1290,43 @@ Las reglas van del núcleo hacia afuera.
 
 \subsection{Evaluación y trazabilidad de los ASR\greenbadge{Entrega final}}
 \hint{Una fila por ASR. Esta tabla es la matriz de trazabilidad: no la repitan en otro lugar. En «Resultado» no escriban sólo «cumple»: digan qué mostró la evidencia.}
-\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{1.6cm}|p{1.7cm}|p{1.3cm}|p{1.7cm}|Y|p{1.6cm}|}\hline
+\begin{xltabular}{\linewidth}{|>{\small\raggedright\arraybackslash}p{1.4cm}|>{\small\raggedright\arraybackslash}p{1.6cm}|>{\small\raggedright\arraybackslash}p{1.7cm}|>{\small\raggedright\arraybackslash}p{1.3cm}|>{\small\raggedright\arraybackslash}p{1.7cm}|Y|>{\small\raggedright\arraybackslash}p{1.6cm}|}\hline
   \headrow\hd{ASR} & \hd{ADR} & \hd{Elementos} & \hd{Vista} & \hd{Evidencia} & \hd{Resultado} & \hd{Riesgo residual}\\\hline
-  \small ASR-01 & \ph{\small[ADR-\_\_]} & \ph{\small[C-\_\_]} & \ph{\small[V-\_\_]} & \ph{\small[EV-\_\_]} & \ph{\small[Qué mostró la evidencia]} & \ph{\small[R-\_\_]}\\\hline
-  & & & & & & \\\hline
-\end{tabularx}
+  \endfirsthead
+  \headrow\hd{ASR} & \hd{ADR} & \hd{Elementos} & \hd{Vista} & \hd{Evidencia} & \hd{Resultado} & \hd{Riesgo residual}\\\hline
+  \endhead
+  ASR-01 & ADR-001, ADR-008 & C-03, C-04, C-05 & V-06 & EV-01 & El servidor valida cada jugada con C-05 antes de guardarla (V-06, pasos 11 a 14). Las pruebas del núcleo rechazan la jugada fuera de turno, con el número adelantado, a una casilla inalcanzable, de alguien ajeno a la partida o con el reloj agotado. No se probó con un cliente modificado. & R-12, R-14\\\hline
+  ASR-02 & ADR-001, ADR-002 & C-03, C-09 & V-05, V-06 & — & Sin medir. Cada aviso sale en una vía después de guardarse, pero no se ha comprobado el percentil 95 de 500 ms. & R-05\\\hline
+  ASR-03 & ADR-003, ADR-005 & C-01, C-07 & V-02 & — & Sin evidencia registrada. El equipo desarrolla en macOS arm64 y en Windows con el mismo código. & R-03\\\hline
+  ASR-04 & ADR-001, ADR-007 & C-03, C-04, C-06 & V-01; tabla 4.2 & EV-01 & Ya están construidos el resumen PBKDF2, el token guardado como SHA-256, el bloqueo escalonado y la bitácora. Las pruebas cubren el bloqueo, el identificador desconocido y la sesión de 24 h. Falta el doble factor, y el bloqueo revela qué cuentas existen. & R-01, R-07, R-13, R-15\\\hline
+  ASR-05 & ADR-001, ADR-005, ADR-008 & C-04, C-06, C-07 & V-05, V-06 & EV-01 & Cada jugada y cada cierre se guardan en una sola escritura; \texttt{PK\_Move} y \texttt{UX\_Participation\_\allowbreak Unfinished} impiden duplicados, y \texttt{MatchGate} ordena las operaciones de cada partida. No se probó contra la base real. & R-04, R-11\\\hline
+  ASR-06 & ADR-008 & C-04, C-05, C-06 & V-03 & EV-01, EV-02 & 684 pruebas del núcleo corren sin base ni red. Se cumplen 8 de las 9 reglas de dependencia; la 5 falla en C-03. & R-07, R-11, R-12\\\hline
+  ASR-07 & ADR-006 & C-01, C-09 & V-04 & — & Todo texto visible sale de \texttt{Strings.resx} y \texttt{Strings.es-MX.resx}, y los errores llegan codificados para que el cliente los traduzca. Agregar un idioma exige cambiar \texttt{Language\allowbreak Catalog}, cosa que ASR-07 no permite. & Idiomas fijos en el código (sin fila en 7.3)\\\hline
+\end{xltabular}
 
 \subsection{Evidencias\greenbadge{Entrega final}}
 \hint{Registren aquí cada EV que citen. Una evidencia puede ser una revisión por escenario, una medición, una prueba o un análisis. Es obligatorio incluir al menos una verificación empírica ejecutada y una comprobación de conformidad.}
-\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|p{2.6cm}|Y|p{3.2cm}|}\hline
+\noindent\begin{tabularx}{\linewidth}{|p{1.4cm}|>{\raggedright\arraybackslash}p{2.6cm}|Y|>{\small\raggedright\arraybackslash}p{3.2cm}|}\hline
   \headrow\hd{EV} & \hd{Tipo} & \hd{Qué se hizo y qué resultó} & \hd{Archivo o referencia}\\\hline
-  EV-01 & \ph{[Revisión / Medición / Prueba / Análisis]} & \ph{[…]} & \ph{[evidencia/…]}\\\hline
-  & & & \\\hline
+  EV-01 & Prueba (verificación empírica) & Se ejecutaron las dos suites del núcleo, \texttt{Bastion.Domain.Tests} y \texttt{Bastion.Server.\allowbreak Application.Tests}, sobre Arclyne/bastion 63beca6 el 25/11/2026: 320 y 364 pruebas, sin fallas, en 0,31 s y 0,55 s. Las suites no tienen cadena de conexión ni dirección del servidor, y cada puerto se sustituye con un doble escrito a mano (regla 9). & \texttt{dotnet test} de las dos suites; \texttt{evidencia/\allowbreak ev-01-\allowbreak pruebas-\allowbreak nucleo.txt}\\\hline
+  EV-02 & Comprobación de conformidad & \texttt{evidencia/\allowbreak reglas\_\allowbreak dependencia.py} revisa las nueve reglas de 4.3 en los \texttt{.csproj} y los \texttt{using} del código. Contra 63beca6 pasan 8 de 9; la regla 5 falla en nueve archivos de C-03 que usan EF Core o \texttt{System.\allowbreak Data.\allowbreak Common} (R-11). & \texttt{evidencia/\allowbreak reglas\_\allowbreak dependencia.py}; \texttt{evidencia/\allowbreak ev-02-\allowbreak reglas-\allowbreak dependencia.txt}\\\hline
 \end{tabularx}
 
-\begin{ficha}{Verificación empírica · EV-\_\_}
-  \frow{Afirmación que se pone a prueba}{\ph{[Qué esperan de la arquitectura]}}
-  \frow{Cómo se probó}{\ph{[Prototipo pequeño (spike), medición o prueba; condiciones]}}
-  \frow{Resultado}{\ph{[Qué se observó, con números]}}
-  \frow{Qué cambia en la arquitectura}{\ph{[Se confirma, se matiza o se refuta; ajuste realizado]}}
+\begin{ficha}{Verificación empírica · EV-01}
+  \frow{Afirmación que se pone a prueba}{Las reglas del juego (C-05) y los casos de uso (C-04) se prueban sin base de datos ni red (ASR-06, QAS-10).}
+  \frow{Cómo se probó}{\texttt{dotnet test} de las dos suites del núcleo, en Windows con .NET 10.0.400, sobre 63beca6. Las suites solo referencian al módulo que prueban y no leen configuración; SQL Server estaba encendido, pero ninguna prueba tiene cómo conectarse a él.}
+  \frow{Resultado}{684 pruebas sin fallas: 320 de C-05 en 311 ms y 364 de C-04 en 554 ms; cada suite tarda unos 5 s en total, contando la compilación.}
+  \frow{Qué cambia en la arquitectura}{Se confirma ASR-06 para C-04 y C-05. Quedan sin comprobar la primera mitad de la medida de QAS-10, que cada regla de negocio de CU-13 y CU-14 tenga al menos una prueba, porque falta relacionar cada regla con sus pruebas, y la otra mitad de ASR-06, cambiar el correo o el segundo factor sin tocar los flujos, porque C-08 no existe (R-07).}
 \end{ficha}
 
 \begin{callout}
   {\small\bfseries\color{SADBlue}No necesitan construir el sistema completo:} {\small un prototipo pequeño basta si pone a prueba la afirmación.}
 \end{callout}
 
-\begin{ficha}{Comprobación de conformidad · EV-\_\_}
-  \frow{Decisión que protege}{\ph{[ADR-\_\_ o regla de dependencia]}}
-  \frow{Procedimiento}{\ph{[Pasos que otra persona puede repetir. Automatizarlo es deseable, no obligatorio]}}
-  \frow{Resultado esperado}{\ph{[Cuándo se considera que la regla se violó]}}
+\begin{ficha}{Comprobación de conformidad · EV-02}
+  \frow{Decisión que protege}{Las reglas de dependencia 1 a 9 de 4.3 (ADR-008, ADR-002 y ADR-005).}
+  \frow{Procedimiento}{1. Actualizar el clon de Arclyne/bastion. 2. Desde este repositorio, correr \texttt{python evidencia/\allowbreak reglas\_\allowbreak dependencia.py RUTA\_DEL\_\allowbreak REPOSITORIO}; solo usa la biblioteca estándar de Python 3. 3. Leer una línea por regla, con PASA o FALLA y, si falla, los archivos que la incumplen. Conviene correrlo antes de cada entrega y antes de unir un PR a \texttt{main}.}
+  \frow{Resultado esperado}{Una regla se viola cuando el script la marca con FALLA: una referencia entre proyectos fuera de las permitidas, un \texttt{using} prohibido, el reloj o el azar leídos en C-05 o C-04, o la conexión a la base fuera de C-06; entonces el script termina con código 1. El 25/11/2026, contra 63beca6, solo falla la regla 5 (R-11).}
 \end{ficha}
 
 \subsection{Riesgos y pendientes\bluebadge{Primera entrega inicia}}
@@ -1344,14 +1355,30 @@ Las reglas van del núcleo hacia afuera.
 
 \subsection{Transición a Construcción\greenbadge{Entrega final}}
 \hint{Instrucciones accionables para quien implemente: decisiones que no deben romperse, interfaces críticas, comprobaciones que deben ejecutarse y orden sugerido de trabajo. Si ya hay código, registren las diferencias con el diseño; si no, cómo se comprobarán.}
-\ph{[Guía breve.]}
+Quien implemente parte de Arclyne/bastion en 63beca6.
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Decisiones que no deben romperse:} el servidor como única autoridad (ADR-001); CoreWCF dúplex sobre net.tcp con TLS y la huella del certificado (ADR-002, ADR-007); el esquema en scripts SQL, sin migraciones (ADR-005); los resultados codificados que traduce el cliente (ADR-006), y el núcleo hexagonal con sus nueve reglas de dependencia (ADR-008, 4.3).
+  \item \textbf{Interfaces críticas:} las cinco de 4.2. Cambiar una obliga a revisar su contrato y las vistas que la citan.
+  \item \textbf{Antes de unir un PR a \texttt{main}:} correr las pruebas del núcleo (EV-01) y el script de las reglas de dependencia (EV-02).
+  \item \textbf{Orden sugerido:} 1) sacar EF Core y \texttt{System.Data.Common} de C-03 (R-11), para que EV-02 pase completa; 2) declarar los puertos de C-08 y elegir su proveedor (R-07, CON-08); 3) revisar el estado de la cuenta en cada sesión, poder terminar sesiones y agregar \texttt{LogOut} (R-14, R-15), antes de construir CU-28; 4) bloquear también los identificadores que no existen (R-13); 5) subir los paquetes de criptografía (R-08); 6) construir el prototipo de carga (R-05).
+\end{itemize}
 
 \medskip
-\noindent\begin{tabularx}{\linewidth}{|p{2.8cm}|Y|Y|Y|}\hline
+\begin{xltabular}{\linewidth}{|>{\raggedright\arraybackslash}p{2.8cm}|Y|Y|Y|}\hline
   \headrow\hd{Elemento o ADR} & \hd{Qué dice el diseño} & \hd{Qué hay en el código, o cómo se comprobará} & \hd{Qué se hará}\\\hline
-  \ph{[ADR-\_\_ / C-\_\_]} & \ph{[…]} & \ph{[…]} & \ph{[…]}\\\hline
-  & & & \\\hline
-\end{tabularx}
+  \endfirsthead
+  \headrow\hd{Elemento o ADR} & \hd{Qué dice el diseño} & \hd{Qué hay en el código, o cómo se comprobará} & \hd{Qué se hará}\\\hline
+  \endhead
+  \small ADR-008, regla 5 & C-03 no usa tipos de acceso a datos. & Nueve archivos de C-03 atrapan \texttt{DbUpdate\allowbreak Exception} o \texttt{DbException} (EV-02). & R-11\\\hline
+  \small Reglas 7 y 8 & C-01 no ve C-02, y C-03 no abre conexiones. & Se cumplen, pero solo por \texttt{PrivateAssets} y por disciplina: las clases de C-09 y C-06 son públicas. & R-12\\\hline
+  \small ASR-04, CON-08 & El inicio de sesión ofrece doble factor. & \texttt{IsTwoFactor\allowbreak Enabled} existe sin uso; C-08 no existe. & R-07\\\hline
+  \small QAS-02, CU-01 RN-01 & La respuesta es igual, exista o no la cuenta. & Solo las cuentas reales se bloquean. & R-13\\\hline
+  \small QAS-07, CU-28 RN-13 & Una sanción de cuenta corta las sesiones. & \texttt{SessionVerifier} no mira el estado de la cuenta, y nada termina una sesión. & R-14\\\hline
+  \small ASR-07 & Agregar un idioma no requiere cambiar código. & \texttt{LanguageCatalog} declara \texttt{es-MX} y \texttt{en-US} en el código. & Leer los idiomas de los archivos de recursos que existan.\\\hline
+  \small ADR-003 (R-02) & La presentación del tablero se registra en un ADR. & El tablero 3D ya está construido (\texttt{BoardScene}), pero solo está anotado en ADR-003. & Escribir un ADR que compare las tres opciones.\\\hline
+  \small QAS-03, ASR-02 & El 95\,\% de las jugadas llega en menos de 500 ms. & Sin medir. & Prototipo de carga con 20 partidas (R-05).\\\hline
+  \small ADR-005 (R-09) & El esquema cubre el alcance de 28 casos. & Siguen las tablas deseables \texttt{Mute}, \texttt{Block}, \texttt{Appeal} y \texttt{Moderation\allowbreak Log}, sin uso. & Quitarlas de \texttt{database/} y de los requisitos.\\\hline
+\end{xltabular}
 
 % =====================================================================
 % Anexos
