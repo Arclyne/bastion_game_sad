@@ -78,6 +78,13 @@
   {\par\smallskip\noindent\small\begin{tabular}{|L|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-3.6cm-6\tabcolsep-3\arrayrulewidth\relax}|}\hline
    \rowcolor{SADHead}\multicolumn{2}{|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-4\tabcolsep-2\arrayrulewidth\relax}|}{\bfseries #1}\\\hline}
   {\end{tabular}\par\medskip}
+% Same card as a longtable, for a card taller than one page
+\newenvironment{fichalarga}[1]
+  {\par\smallskip\small\setlength{\LTpre}{0pt}\setlength{\LTpost}{0pt}%
+   \begin{longtable}{|L|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-3.6cm-6\tabcolsep-3\arrayrulewidth\relax}|}\hline
+   \rowcolor{SADHead}\multicolumn{2}{|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-4\tabcolsep-2\arrayrulewidth\relax}|}{\bfseries #1}\\\hline\endfirsthead
+   \rowcolor{SADHead}\multicolumn{2}{|>{\raggedright\arraybackslash}p{\dimexpr\linewidth-4\tabcolsep-2\arrayrulewidth\relax}|}{\bfseries #1 (continúa)}\\\hline\endhead}
+  {\end{longtable}\par\medskip}
 \newcommand{\frow}[2]{#1 & #2\\\hline}
 
 \newcommand{\checkitem}[1]{\item[$\square$] #1}
@@ -101,9 +108,9 @@
 \noindent\begin{tabularx}{\linewidth}{|L|Y|}\hline
   Proyecto & Bastión \\\hline
   Equipo e integrantes & Equipo 4 · Ángel Gabriel Aguilar Hernández · José Eduardo Prior Hernández\\\hline
-  Versión del documento & v0.6\\\hline
+  Versión del documento & v0.7\\\hline
   Entrega & Primera entrega\\\hline
-  Fecha & 27/10/2026\\\hline
+  Fecha & 25/11/2026\\\hline
 \end{tabularx}
 
 \vspace{1.4em}
@@ -147,6 +154,7 @@
   v0.4 & 16/10/2026 & V-02 pasa a ser la vista de contenedores y paquetes de la solución nueva; se agrega C-09 (\texttt{Bastion.Client.Networking}), el cliente referencia a C-09 y C-05, y C-06 implementa también los puertos de contraseña y token; el núcleo hexagonal queda solo en C-04 y C-05 pasa a ser biblioteca compartida (ADR-008); V-01, reglas de dependencia, glosario y resumen ajustados; se agregan V-03 y V-04 con los componentes UML del servidor y del cliente ya construidos.\\\hline
   v0.5 & 25/10/2026 & Portada actualizada a la versión vigente; el glosario se parte entre páginas para que no se pierdan términos.\\\hline
   v0.6 & 27/10/2026 & Escenarios de calidad revisados contra el libro: cada QAS indica su sub-atributo (ISO 25010, Fig. 14.1) y tiene un nombre descriptivo con interesado, intención y la respuesta del escenario general; se ajustan Fuente, Entorno (primero el tipo de entorno), Artefacto, Respuesta y Medida (solo la meta, en porcentaje y sin mezclar atributos), y las filas de seguridad de QAS-01 y QAS-02; QAS-09 pasa a (M, M) y QAS-11 a (A, B). El árbol de utilidad tiene una fila por atributo y refinamientos por sub-atributo. ASR-01 suma los objetivos de negocio, ASR-02 se expresa en percentil 95 y ASR-06 suma CRN-26. Las ADR se priorizan: seis prioritarias, y ADR-003 y ADR-004 quedan como complementarias (3.3). Se quitan las referencias de tiempo fuera de los escenarios de desempeño.\\\hline
+  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05 y V-06. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo.\\\hline
 \end{xltabular}
 
 \subsection{Resumen de la arquitectura}
@@ -157,9 +165,9 @@
 
 \textbf{Estructura general.} Cliente-servidor con el servidor como única autoridad (ADR-001) y, dentro del servidor, puertos y adaptadores (ADR-008): el cliente MonoGame (C-01) llama al servidor por sus proxies remotos (C-09), los únicos que conocen los contratos (C-02); el host (C-03) los expone con CoreWCF y traduce cada llamada al núcleo, los casos de uso (C-04), que lleva en memoria la cola de emparejamiento y las salas y usa las reglas de un dominio sin dependencias que también compila el cliente (C-05); todo lo externo sale por puertos que implementan los adaptadores: la persistencia con EF Core (C-06) en SQL Server (C-07), y el correo y el segundo factor (C-08). Las vistas V-01 y V-02 lo muestran.
 
-\textbf{Decisiones esenciales.} En orden de prioridad: el servidor como única autoridad en un esquema cliente-servidor (ADR-001); EF Core y SQL Server 2022 con el esquema en scripts SQL (ADR-005); CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); canal cifrado con TLS y servidor reconocido por la huella de su certificado (ADR-007, que sustituye al \texttt{SecurityMode.None} de ADR-004); resultados codificados traducidos en el cliente (ADR-006); núcleo del servidor aislado tras puertos y adaptadores (ADR-008). Como decisión complementaria, el cliente se construye con MonoGame DesktopGL (ADR-003), cuya presentación del tablero se decidirá en la entrega final (R-02).
+\textbf{Decisiones esenciales.} En orden de prioridad: el servidor como única autoridad en un esquema cliente-servidor (ADR-001); EF Core y SQL Server con el esquema en scripts SQL (ADR-005); CoreWCF dúplex sobre net.tcp con llamadas asíncronas (ADR-002); canal cifrado con TLS y servidor reconocido por la huella de su certificado (ADR-007, que sustituye al \texttt{SecurityMode.None} de ADR-004); resultados codificados traducidos en el cliente (ADR-006); núcleo del servidor aislado tras puertos y adaptadores (ADR-008). Como decisión complementaria, el cliente se construye con MonoGame DesktopGL y Gum, con un tablero 3D (ADR-003).
 
-\textbf{Riesgos abiertos.} La custodia del certificado del servidor y la distribución de su huella (R-01), la presentación del tablero (R-02), SQL Server bajo Rosetta (R-03), el servidor como punto único de falla (R-04), la latencia aún sin medir (R-05), un esquema y un código que todavía reflejan el alcance anterior (R-09) y un código del servidor que aún sigue las capas (R-10).
+\textbf{Riesgos abiertos.} La custodia del certificado del servidor y la distribución de su huella (R-01), SQL Server bajo Rosetta (R-03), el servidor como punto único de falla (R-04), la latencia aún sin medir (R-05), el correo y el segundo factor sin proveedor, con CON-08 sin cumplir (R-07), paquetes de criptografía con vulnerabilidades conocidas (R-08), un esquema que todavía conserva tablas fuera del alcance (R-09), excepciones de la base que llegan hasta C-03 (R-11), reglas de dependencia que dependen de clases públicas (R-12), un bloqueo que revela qué cuentas existen (R-13), sanciones de cuenta que no cortan las sesiones (R-14) y la falta de cierre de sesión (R-15).
 
 \subsection{Glosario}
 \begin{xltabular}{\linewidth}{|p{5.2cm}|Y|}\hline
@@ -171,7 +179,7 @@
   Servidor de partidas & Proceso .NET que expone los servicios CoreWCF, valida toda regla del juego y de la cuenta, y es el único que accede a la base de datos.\\\hline
   Contrato & Interfaz de servicio o de callback y sus tipos de datos (\texttt{Bastion.Contracts}), compartidos por cliente y servidor.\\\hline
   Núcleo & Parte del servidor que contiene los casos de uso y declara los puertos (\texttt{Bastion.Server.Application}); es el hexágono. Usa las reglas de \texttt{Bastion.Domain}, que comparte con el cliente, y no conoce la red, la base de datos ni el correo (ADR-008).\\\hline
-  Puerto & Interfaz que declara el núcleo para lo que necesita de fuera, como guardar una cuenta o avisar a un jugador (\texttt{IAccountRepository}, \texttt{IPlayerNotifier}).\\\hline
+  Puerto & Interfaz que declara el núcleo para lo que necesita de fuera, como guardar una cuenta o avisar a un jugador (\texttt{IAccountRepository}, \texttt{IMatchMoveNotifier}).\\\hline
   Adaptador & Clase fuera del núcleo que lo conecta con una tecnología. El conductor recibe las llamadas y las lleva al núcleo (las fachadas CoreWCF); el conducido implementa un puerto (EF Core, correo, callbacks).\\\hline
   Callback & Llamada que el servidor hace al cliente por el canal dúplex para avisarle de un cambio (jugada del rival, mensaje de chat, fin de partida) sin que el cliente lo pida.\\\hline
   Dúplex net.tcp & Canal TCP binario de CoreWCF que permite llamadas en ambos sentidos sobre la misma conexión. En Bastión va cifrado con TLS (ADR-007).\\\hline
@@ -281,7 +289,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \small Objetivo de negocio & Que las partidas clasificatorias sean justas: el ranking solo vale si nadie puede hacer trampa ni perder elo por una falla del sistema, y por eso solo clasifican las partidas del emparejamiento, para que dos amigos no se regalen puntos (CU-10 RN-03). & Si el ranking no importara, bajaría la prioridad de QAS-01 y QAS-06, aunque las reglas del juego seguirían teniendo que cumplirse.\\\hline
   \small Objetivo de negocio & Que el juego sea apto para jugadores desde ocho años: ningún mensaje con palabras prohibidas llega a otro jugador y la mala conducta se sanciona sin depender de un moderador (CU-02 RN-05, CU-21, CU-28). & Sin menores entre los jugadores, el filtro y los strikes podrían relajarse, pero seguirían siendo parte de la moderación que exige CON-09.\\\hline
   \small Condición organizacional & Equipo de dos personas, una en macOS arm64 y otra en Windows, durante el periodo agosto 2026 – enero 2027, en catorce semanas con incrementos semanales auditables y entregas parciales evaluadas. & Con menos tiempo se recortan primero los casos \textit{Should} (CU-15 a CU-17, CU-25 y CU-27), no la estructura; los deseables ya quedaron fuera.\\\hline
-  \small Condición organizacional & El repositorio remoto se alojará en GitLab o Bitbucket, según lo que pida el curso (decisión abierta, R-06). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
+  \small Condición organizacional & El código y este documento se alojan en GitHub, en la organización Arclyne (R-06, cerrado). & No afecta la arquitectura; solo el flujo de trabajo.\\\hline
 \end{xltabular}
 
 \subsection{Escenarios de calidad y árbol de utilidad}
@@ -461,7 +469,7 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
 \noindent\begin{tabularx}{\linewidth}{|p{1.5cm}|p{1.7cm}|Y|Y|p{3cm}|}\hline
   \headrow\hd{Prioridad} & \hd{ADR} & \hd{Decisión} & \hd{Estado} & \hd{ASR que atiende}\\\hline
   1 & ADR-001 & Organizar el sistema en capas cliente-servidor con el servidor como única autoridad & Sustituido en parte por ADR-008 & ASR-01, ASR-05, ASR-06\\\hline
-  2 & ADR-005 & Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL & Aceptado & ASR-04, ASR-05, ASR-03\\\hline
+  2 & ADR-005 & Persistir con EF Core y SQL Server, con el esquema en scripts SQL & Aceptado & ASR-04, ASR-05, ASR-03\\\hline
   3 & ADR-002 & Comunicar cliente y servidor con CoreWCF dúplex sobre net.tcp y llamadas asíncronas & Aceptado & ASR-02, ASR-03\\\hline
   4 & ADR-007 & Cifrar el canal net.tcp con TLS y reconocer al servidor por la huella de su certificado & Aceptado & ASR-04, ASR-03\\\hline
   5 & ADR-006 & Traducir en el cliente los resultados codificados del servidor & Aceptado & ASR-07\\\hline
@@ -483,13 +491,13 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Elementos afectados}{C-01, C-02, C-03, C-04, C-05, C-06}
 \end{ficha}
 
-\begin{ficha}{ADR-005 · Persistir con EF Core y SQL Server 2022, con el esquema en scripts SQL}
+\begin{ficha}{ADR-005 · Persistir con EF Core y SQL Server, con el esquema en scripts SQL}
   \frow{Estado}{Aceptado}
   \frow{Contexto}{Las operaciones de partida, sala y moderación deben ser atómicas (ASR-05), la base debe correr en las dos máquinas (ASR-03) y los datos de las cuentas deben quedar protegidos (ASR-04). Los scripts SQL del modelo de datos ya existen en los requisitos.}
-  \frow{Alternativas}{A. EF Core 10 con el proveedor de SQL Server, sin migraciones: los scripts SQL mandan y el código se ajusta a ellos; SQL Server 2022 en Docker. A favor: transacciones y consultas tipadas; un solo origen del esquema. En contra: hay que mantener a mano la correspondencia entre entidades y tablas.\newline B. EF Core con migraciones. A favor: el esquema se genera desde el código. En contra: dos fuentes de verdad, los scripts y las migraciones, que tarde o temprano divergen.\newline C. ADO.NET con SQL escrito a mano. A favor: control total y lo más cercano a lo visto en clase. En contra: mucho más código repetitivo y propenso a errores de mapeo.\newline D. Azure SQL Edge en Docker para tener imagen ARM en Mac. A favor: nativo en Apple silicon. En contra: Microsoft lo retiró.}
+  \frow{Alternativas}{A. EF Core 10 con el proveedor de SQL Server, sin migraciones: los scripts SQL mandan y el código se ajusta a ellos; SQL Server 2019 o posterior (CON-04), en contenedor en la Mac. A favor: transacciones y consultas tipadas; un solo origen del esquema. En contra: hay que mantener a mano la correspondencia entre entidades y tablas.\newline B. EF Core con migraciones. A favor: el esquema se genera desde el código. En contra: dos fuentes de verdad, los scripts y las migraciones, que tarde o temprano divergen.\newline C. ADO.NET con SQL escrito a mano. A favor: control total y lo más cercano a lo visto en clase. En contra: mucho más código repetitivo y propenso a errores de mapeo.\newline D. Azure SQL Edge en Docker para tener imagen ARM en Mac. A favor: nativo en Apple silicon. En contra: Microsoft lo retiró.}
   \frow{Criterios}{Atomicidad (ASR-05), multiplataforma (ASR-03), un solo origen del esquema, esfuerzo.}
-  \frow{Decisión}{A. \texttt{BastionDbContext} con configuraciones por entidad y repositorios en \texttt{Bastion.Server.Data}, que ADR-008 convierte en el adaptador de persistencia de \texttt{Bastion.Server.Adapters}; el inicio de sesión \texttt{BastionServerConnection} no tiene permiso \texttt{DELETE}; la cadena de conexión vive en user-secrets o en variables de entorno, nunca en el repositorio. En Mac la imagen x64 corre con Rosetta.}
-  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga la dependencia de Docker y Rosetta en Mac.}
+  \frow{Decisión}{A. \texttt{BastionDbContext} con configuraciones por entidad y repositorios en el adaptador de persistencia de \texttt{Bastion.Server.Adapters} (ADR-008); el inicio de sesión \texttt{BastionServerConnection} no tiene permiso \texttt{DELETE}; la cadena de conexión vive en user-secrets o en variables de entorno, nunca en el repositorio. En Mac la imagen x64 corre con Rosetta.}
+  \frow{Consecuencias}{Se gana transacciones con poco código y un esquema único. Se paga que en la Mac SQL Server solo corre como imagen x64 emulada con Rosetta (R-03).}
   \frow{Riesgos}{R-03}
   \frow{Elementos afectados}{C-06, C-07}
 \end{ficha}
@@ -527,28 +535,28 @@ Dentro del sistema están el \textbf{cliente de escritorio} (pantallas, entrada 
   \frow{Elementos afectados}{C-01, C-02, C-04}
 \end{ficha}
 
-\begin{ficha}{ADR-008 · Organizar el servidor en puertos y adaptadores (arquitectura hexagonal)}
+\begin{fichalarga}{ADR-008 · Organizar el servidor en puertos y adaptadores (arquitectura hexagonal)}
   \frow{Estado}{Aceptado. Sustituye la organización en capas del servidor que fijaba ADR-001.}
   \frow{Contexto}{Las reglas del juego y de los casos de uso deben probarse sin base de datos ni red, y el correo y el segundo factor deben poder cambiarse sin tocar los flujos (ASR-06, QAS-09, QAS-10, CRN-26). Con las capas de ADR-001 los servicios referencian el módulo de datos: las interfaces de los repositorios y las entidades viven junto a EF Core, así que el núcleo compila contra la persistencia. Los servicios, además, implementan directamente los contratos de red, de modo que un cambio de contrato o de CoreWCF alcanza a los casos de uso. Está en juego ASR-06; lo que ADR-001 decide para ASR-01 y ASR-05 se mantiene.}
   \frow{Alternativas}{A. Mantener las capas de ADR-001: host $\rightarrow$ servicios $\rightarrow$ datos, con los repositorios definidos en datos. A favor: ya está construido; menos interfaces y sin traducir entre contratos y núcleo. En contra: el núcleo depende de EF Core y de los contratos de red; probarlo obliga a referenciar el módulo de datos; el correo, el segundo factor y los avisos a los jugadores no tienen un lugar definido y tienden a llamarse desde los servicios.\newline B. Puertos y adaptadores (hexagonal): un núcleo con los casos de uso y el dominio declara sus puertos; los adaptadores conductores (fachadas CoreWCF) lo llaman y los conducidos (persistencia, correo, segundo factor, avisos por callback, hora e IP de la llamada) implementan sus puertos; toda dependencia apunta hacia el núcleo. A favor: el núcleo no referencia CoreWCF, EF Core, MailKit ni los contratos; cada servicio externo se cambia escribiendo otro adaptador; las pruebas usan adaptadores en memoria. En contra: más interfaces; una traducción en cada frontera (contratos y entidades); hay que reorganizar el código ya construido.\newline C. Arquitectura limpia en anillos (entidades, casos de uso, adaptadores de interfaz, frameworks), con un proyecto por anillo. A favor: la misma regla de dependencia con una separación más fina. En contra: más proyectos y más traducciones de las que pide un servidor de este tamaño para dos personas; frente a B no aporta nada que exija ASR-06.}
   \frow{Criterios}{Probar el núcleo sin base de datos ni red (ASR-06, QAS-10), cambiar los servicios externos sin tocar los flujos (ASR-06, QAS-09, CRN-26), aislar el núcleo de la tecnología de red y de persistencia, esfuerzo para dos personas.}
-  \frow{Decisión}{B. El núcleo, el hexágono, es \texttt{Bastion.Server.Application} (casos de uso y puertos). Usa las reglas de \texttt{Bastion.Domain}, que queda fuera del hexágono porque también lo compila el cliente: es una biblioteca sin dependencias, sin puertos ni estado del servidor. Puertos conducidos: los de persistencia (\texttt{IAccountRepository}, \texttt{ISessionRepository}, \texttt{IMatchRepository}…), \texttt{IVerificationMailer}, \texttt{ISecondFactorProvider}, \texttt{IPlayerNotifier} e \texttt{ICallContext}. \texttt{Bastion.Server.Host} es el adaptador conductor: sus fachadas CoreWCF implementan los contratos de C-02, traducen los datos del contrato a tipos del núcleo y devuelven resultados codificados (ADR-006); aloja también los adaptadores que dependen de WCF (\texttt{WcfCallContext}, \texttt{WcfPlayerNotifier}) y es la raíz de composición, que elige el adaptador de persistencia (EF Core o en memoria) según \texttt{Bastion:Storage}. \texttt{Bastion.Server.Adapters} reúne los adaptadores conducidos: persistencia con EF Core (ADR-005) y en memoria, correo y segundo factor. Los puertos solo usan tipos del núcleo: ni las entidades de EF Core ni las excepciones de la base cruzan hacia él. De ADR-001 se mantienen el cliente-servidor y el servidor como única autoridad.}
+  \frow{Decisión}{B. El núcleo, el hexágono, es \texttt{Bastion.Server.Application} (casos de uso y puertos). Usa las reglas de \texttt{Bastion.Domain}, que queda fuera del hexágono porque también lo compila el cliente: es una biblioteca sin dependencias, sin puertos ni estado del servidor. Puertos conducidos: los de persistencia (\texttt{IAccountRepository}, \texttt{ISessionRepository}, \texttt{IMatchRepository}…), los de seguridad y azar (\texttt{IPasswordHasher}, \texttt{ISessionTokenGenerator}, \texttt{ITurnOrderShuffler} e \texttt{IRoomCodeGenerator}), los once de aviso a los jugadores (\texttt{IMatchMoveNotifier}, \texttt{IRoomNotifier}, \texttt{IPlayerPresence}…) y, planeados, \texttt{IVerificationMailer} e \texttt{ISecondFactorProvider}. \texttt{Bastion.Server.Host} es el adaptador conductor: sus fachadas CoreWCF implementan los contratos de C-02, traducen los datos del contrato a tipos del núcleo y devuelven resultados codificados (ADR-006); aloja también el adaptador que depende de WCF, \texttt{Notification\allowbreak ChannelRegistry}, que implementa los puertos de aviso con el canal dúplex. La hora (\texttt{TimeProvider}) y la dirección del jugador (\texttt{CallerAddress}) las toma C-03 y se las pasa al núcleo como parámetros. Es también la raíz de composición. \texttt{Bastion.Server.Adapters} reúne los adaptadores conducidos: la persistencia con EF Core (ADR-005), los resúmenes de contraseñas y tokens, y el azar; el correo y el segundo factor irán ahí (C-08). No hay un adaptador de persistencia en memoria: el núcleo se prueba con dobles escritos a mano (regla 9 de 4.3). Los puertos solo usan tipos del núcleo: ni las entidades de EF Core ni las excepciones de la base cruzan hacia él. De ADR-001 se mantienen el cliente-servidor y el servidor como única autoridad.}
   \frow{Consecuencias}{Se gana un núcleo que se compila y se prueba solo, adaptadores intercambiables para servicios cuyo proveedor aún no se elige (R-07) y una regla de dependencia que se comprueba leyendo las referencias entre proyectos. Se paga más interfaces, una traducción en cada frontera y reorganizar el código ya construido (R-10).}
-  \frow{Riesgos}{R-07, R-10}
+  \frow{Riesgos}{R-07, R-10 (cerrado), R-11, R-12}
   \frow{Elementos afectados}{C-03, C-04, C-05, C-06, C-08}
-\end{ficha}
+\end{fichalarga}
 
 \subsection{Decisiones complementarias}
-No están entre las seis prioritarias de esta entrega. ADR-003 se completa en la entrega final con la decisión sobre la presentación del tablero (R-02); ADR-004 está sustituida por ADR-007 y se conserva como registro, porque una decisión que cambia no se borra.
+No están entre las seis prioritarias de esta entrega. ADR-003 ya incluye la presentación del tablero, que cerró R-02; ADR-004 está sustituida por ADR-007 y se conserva como registro, porque una decisión que cambia no se borra.
 
 \begin{ficha}{ADR-003 · Construir el cliente con MonoGame DesktopGL}
-  \frow{Estado}{Aceptado. Complementaria: su parte abierta, la presentación del tablero (R-02), se decidirá en la entrega final.}
+  \frow{Estado}{Aceptado. Complementaria. Su parte abierta, la presentación del tablero (R-02), ya se decidió: un tablero 3D de estilo low-poly.}
   \frow{Contexto}{El cliente es un juego de escritorio que debe correr en macOS arm64 y en Windows (ASR-03, QAS-08), dibujar el tablero y las pantallas, y ser código C\# que el equipo escribe y que se evalúa.}
   \frow{Alternativas}{A. MonoGame DesktopGL 3.8.5. A favor: biblioteca de código, corre en macOS y Windows con OpenGL; todo lo hace el código C\# del equipo. En contra: no trae controles de interfaz, por lo que el equipo construye los suyos.\newline B. Godot con C\#. A favor: editor de escenas y controles de interfaz listos. En contra: buena parte del trabajo se hace en su editor y no en código, que es lo evaluado.\newline C. Unity. A favor: motor completo y documentación amplia. En contra: sobredimensionado para un tablero 2D; proyecto pesado de versionar entre dos personas.\newline D. Stride. A favor: motor C\# de código abierto. En contra: su editor solo funciona en Windows.\newline E. Avalonia. A favor: interfaz de escritorio multiplataforma en C\#. En contra: no es un motor de juego: sin bucle de juego ni animación del tablero.\newline F. MonoGame WindowsDX. A favor: DirectX nativo. En contra: solo Windows.}
   \frow{Criterios}{Multiplataforma (ASR-03), que el trabajo esté en código evaluable, peso del proyecto y curva de aprendizaje.}
-  \frow{Decisión}{A. El cliente es \texttt{Bastion.Client} con MonoGame DesktopGL, un conjunto propio de controles y pantallas, y un navegador de pantallas.}
-  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga construir controles (campos de texto, listas, ventanas emergentes) y decidir cómo se presenta el tablero (R-02).}
-  \frow{Riesgos}{R-02}
+  \frow{Decisión}{A. El cliente es \texttt{Bastion.Client} con MonoGame DesktopGL, los controles y enlaces de Gum (\texttt{Gum.Forms} y \texttt{Gum.Mvvm}) para las pantallas, y un navegador de pantallas. El tablero se dibuja en 3D con las primitivas de MonoGame (\texttt{BoardScene}).}
+  \frow{Consecuencias}{Se gana control total y un cliente idéntico en ambos sistemas. Se paga depender de Gum para los controles y dibujar el tablero 3D a mano con MonoGame.}
+  \frow{Riesgos}{R-02 (cerrado)}
   \frow{Elementos afectados}{C-01}
 \end{ficha}
 
@@ -760,7 +768,7 @@ Las reglas van del núcleo hacia afuera.
   \node[txt, font=\footnotesize] at (257.46,153.13) {Proveedor del 2.º factor};
   \filldraw[draw=SADGray, fill=black!8] (245.99,96.86) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp] -- (360.74,128.23) arc[start angle=0, end angle=180, x radius=57.37bp, y radius=8.62bp] -- cycle (245.99,128.23) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp];
   \node[txt, font=\footnotesize] at (263.03,109.85) {\textbf{C-07 Base de datos}};
-  \node[txt, font=\footnotesize] at (249.62,98.89) {SQL Server 2022 en Docker};
+  \node[txt, font=\footnotesize] at (249.62,98.89) {SQL Server 2019 o posterior};
   \draw[-{Stealth[length=2mm]}, thick, SADNavy] (144.62,351.69) -- (144.62,330.77);
   \draw[-{Stealth[length=2mm]}, thick, SADNavy] (91.75,374.51) -- (75.18,374.51) -- (75.18,241.28) -- (250.49,241.28);
   \draw[-{Stealth[length=2mm]}, thick, SADNavy] (194.23,300.81) -- (253.76,300.81);
@@ -877,7 +885,7 @@ Las reglas van del núcleo hacia afuera.
   \node[txt, font=\scriptsize] at (351.55,342.50) {IUnitOfWork};
   \filldraw[draw=SADGray, fill=black!8] (405.89,167.97) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp] -- (520.64,199.35) arc[start angle=0, end angle=180, x radius=57.37bp, y radius=8.62bp] -- cycle (405.89,199.35) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp];
   \node[txt, font=\footnotesize] at (422.93,180.97) {\textbf{C-07 Base de datos}};
-  \node[txt, font=\footnotesize] at (409.52,170.01) {SQL Server 2022 en Docker};
+  \node[txt, font=\footnotesize] at (409.52,170.01) {SQL Server 2019 o posterior};
   \draw[thick, SADNavy] (463.26,228.78) -- (463.26,224.13);
   \draw[thick, SADNavy] (463.26,207.97) -- (463.26,218.46);
   \draw[thick, SADNavy] (468.93,218.46) arc[start angle=0, end angle=180, radius=5.67bp];
@@ -1307,7 +1315,7 @@ Las reglas van del núcleo hacia afuera.
   \headrow\hd{R} & \hd{Tipo} & \hd{Descripción} & \hd{Qué se hará}\\\hline
   \endhead
   R-01 & Riesgo & El canal va cifrado con TLS (ADR-007), pero si el certificado del servidor y su contraseña se filtran, alguien podría hacerse pasar por el servidor; además, cada cambio de certificado obliga a actualizar la huella en todos los clientes. En la v0.1 este riesgo era el tráfico en claro de ADR-004, ya resuelto. & Ya se cumple que el certificado y su contraseña viven fuera del repositorio: el servidor los lee de \texttt{Server:\allowbreak CertificatePath} y \texttt{Server:\allowbreak CertificatePassword} en los secretos de usuario, y cada cliente toma la huella de la variable \texttt{BASTION\_\allowbreak SERVER\_\allowbreak THUMBPRINT}. Falta documentar en el repositorio cómo generar el certificado y obtener su huella SHA-256, y cambiarlo si se sospecha una filtración.\\\hline
-  R-02 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & \textbf{Cerrado.} El equipo eligió un tablero 3D de estilo low-poly, y la pantalla de partida ya lo dibuja con MonoGame (\texttt{BoardScene}). Falta registrarlo en un ADR y quitar de ADR-003 la parte abierta que remite a esta fila.\\\hline
+  R-02 & Decisión abierta & Presentación del tablero: plano, isométrico 2D o 3D (ADR-003). & \textbf{Cerrado.} El equipo eligió un tablero 3D de estilo low-poly, y la pantalla de partida ya lo dibuja con MonoGame (\texttt{BoardScene}). La decisión quedó anotada en ADR-003; falta un ADR propio que compare las tres opciones.\\\hline
   R-03 & Riesgo & SQL Server no tiene imagen de contenedor para ARM64. En las Mac con Apple silicon solo corre la imagen x64, con la emulación Rosetta, y eso puede bajar el rendimiento o causar fallas (ADR-005, ASR-03). Los scripts piden SQL Server 2019 o posterior (CON-04) y se probaron con SQL Server 2025. & Medir el tiempo de las consultas de QAS-04 en Mac; si falla, usar el servidor de base de la máquina Windows durante el desarrollo.\\\hline
   R-04 & Riesgo & Un único servidor guarda en memoria la cola de emparejamiento, las salas con sus expulsados, los mensajes recientes del chat de lobby y los canales de avisos. Si se cae, ese estado se pierde y el servicio se interrumpe hasta que vuelva (ADR-001, QAS-05, D-24, D-27). Las partidas en curso sí sobreviven, porque viven en la base. & Ya se cumple: cada jugada se escribe antes de notificarla (ASR-05); al arrancar, el servidor retoma las partidas abiertas, con todos los jugadores desconectados y el turno empezando en ese momento, y cierra las salas que quedaron abiertas; el cliente vuelve a conectar el menú y la partida por su cuenta. Se acepta perder la cola, las salas y el chat de lobby, y el punto único de falla, dado el supuesto de uso en aula.\\\hline
   R-05 & Riesgo & No se ha medido si el 95\,\% de las jugadas llega a todos los participantes en menos de 500 ms con 20 partidas simultáneas (QAS-03). A la carga original se suman el cifrado TLS (ADR-007) y, desde que existe el reloj de turno, dos consultas a la base cada segundo para revisar los relojes agotados y los jugadores ausentes. & Construir un prototipo de carga con clientes simulados que juegue 20 partidas a la vez y compruebe la medida de QAS-03 (será una EV).\\\hline
