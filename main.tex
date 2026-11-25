@@ -154,7 +154,7 @@
   v0.4 & 16/10/2026 & V-02 pasa a ser la vista de contenedores y paquetes de la solución nueva; se agrega C-09 (\texttt{Bastion.Client.Networking}), el cliente referencia a C-09 y C-05, y C-06 implementa también los puertos de contraseña y token; el núcleo hexagonal queda solo en C-04 y C-05 pasa a ser biblioteca compartida (ADR-008); V-01, reglas de dependencia, glosario y resumen ajustados; se agregan V-03 y V-04 con los componentes UML del servidor y del cliente ya construidos.\\\hline
   v0.5 & 25/10/2026 & Portada actualizada a la versión vigente; el glosario se parte entre páginas para que no se pierdan términos.\\\hline
   v0.6 & 27/10/2026 & Escenarios de calidad revisados contra el libro: cada QAS indica su sub-atributo (ISO 25010, Fig. 14.1) y tiene un nombre descriptivo con interesado, intención y la respuesta del escenario general; se ajustan Fuente, Entorno (primero el tipo de entorno), Artefacto, Respuesta y Medida (solo la meta, en porcentaje y sin mezclar atributos), y las filas de seguridad de QAS-01 y QAS-02; QAS-09 pasa a (M, M) y QAS-11 a (A, B). El árbol de utilidad tiene una fila por atributo y refinamientos por sub-atributo. ASR-01 suma los objetivos de negocio, ASR-02 se expresa en percentil 95 y ASR-06 suma CRN-26. Las ADR se priorizan: seis prioritarias, y ADR-003 y ADR-004 quedan como complementarias (3.3). Se quitan las referencias de tiempo fuera de los escenarios de desempeño.\\\hline
-  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05 y V-06. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo. ADR-009 registra la presentación del tablero en 3D. Se completan la arquitectura en ejecución (5), la trazabilidad de los ASR (7.1), las evidencias EV-01 (pruebas del núcleo) y EV-02 (script de reglas de dependencia en \texttt{evidencia/}) y la transición a construcción (7.4).\\\hline
+  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05 y V-06. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo. ADR-009 registra la presentación del tablero en 3D, y V-07 muestra el despliegue. Se completan la arquitectura en ejecución (5), la trazabilidad de los ASR (7.1), las evidencias EV-01 (pruebas del núcleo) y EV-02 (script de reglas de dependencia en \texttt{evidencia/}) y la transición a construcción (7.4).\\\hline
 \end{xltabular}
 
 \subsection{Resumen de la arquitectura}
@@ -675,8 +675,8 @@ Las reglas van del núcleo hacia afuera.
   \small\bfseries Datos, estado y propiedad & C-07 guarda todo lo que debe sobrevivir y solo C-06 lo toca (regla 8); el esquema vive en \texttt{database/}. La cola, las salas en espera, el chat de lobby reciente y los canales viven en memoria en C-04 y C-03, y se acepta perderlos (R-04). El cliente solo guarda el token en memoria y el idioma elegido en un archivo local. & ADR-005, ADR-008 / ASR-05 & V-03; tablas 4.1 y 4.3\\\hline
   \small\bfseries Concurrencia y coordinación & Las fachadas son \texttt{PerCall} con \texttt{ConcurrencyMode.\allowbreak Multiple}: cada petición tiene su propio ámbito de dependencias. La cola, las salas y el chat de lobby tienen cada uno su candado, y cada partida tiene \texttt{MatchGate}: una sola operación a la vez, incluida la revisión del reloj. La base es la última barrera (\texttt{PK\_Move}, \texttt{UX\_Participation\_\allowbreak Unfinished}). Dos servicios de fondo revisan cada segundo el emparejamiento y los relojes. & ADR-001, ADR-008 / ASR-05 & V-05 (bucle de 1 s), V-06 (paso 5)\\\hline
   \small\bfseries Resiliencia y disponibilidad & Un solo servidor sin réplicas: se acepta el punto único de falla (R-04). Cada jugada se guarda antes de avisarse y el cierre es una sola escritura; al arrancar, el servidor retoma las partidas y cierra las salas. El cliente reconecta solo, y quien no vuelve en 60 s pierde si queda otro jugador conectado. Una falla de la base no se reintenta: la operación se rechaza entera. & ADR-001, ADR-005 / ASR-05 & V-05 (rama «falla la base»); R-04\\\hline
-  \small\bfseries Seguridad y límites de confianza & Dos límites. Entre cliente y servidor: TLS con la huella del certificado; el servidor es la única autoridad y valida cada petición con el token y las reglas de C-05; contraseñas con PBKDF2 (210\,000 iteraciones), tokens de 32 bytes guardados como SHA-256, bloqueo escalonado y bitácora de accesos. Entre servidor y base: el usuario \texttt{BastionServer\allowbreak Connection} no puede borrar filas ni cambiar el esquema, y la cadena de conexión y el certificado viven fuera del repositorio. & ADR-001, ADR-007 / ASR-01, ASR-04 & V-01; tabla 4.2 (\texttt{LogIn}); R-01, R-13 a R-15\\\hline
-  \small\bfseries Despliegue y entornos & Un proceso \texttt{Bastion.Server.Host} y una instancia de SQL Server 2019 o posterior en la red del aula; cada jugador corre el cliente en macOS arm64 o en Windows. El servidor se configura con los secretos de usuario y \texttt{appsettings.json}; el cliente, con \texttt{BASTION\_\allowbreak SERVER\_\allowbreak HOST}, \texttt{BASTION\_\allowbreak SERVER\_\allowbreak PORT} y \texttt{BASTION\_\allowbreak SERVER\_\allowbreak THUMBPRINT}. Un solo entorno, el de desarrollo de cada integrante, sin nube; nunca \texttt{PublishTrimmed} ni \texttt{PublishAot}. & ADR-002, ADR-003, ADR-005 / ASR-03 & V-02; R-03, R-08\\\hline
+  \small\bfseries Seguridad y límites de confianza & Dos límites. Entre cliente y servidor: TLS con la huella del certificado; el servidor es la única autoridad y valida cada petición con el token y las reglas de C-05; contraseñas con PBKDF2 (210\,000 iteraciones), tokens de 32 bytes guardados como SHA-256, bloqueo escalonado y bitácora de accesos. Entre servidor y base: el usuario \texttt{BastionServer\allowbreak Connection} no puede borrar filas ni cambiar el esquema, y la cadena de conexión y el certificado viven fuera del repositorio. & ADR-001, ADR-007 / ASR-01, ASR-04 & V-01, V-07; tabla 4.2 (\texttt{LogIn}); R-01, R-13 a R-15\\\hline
+  \small\bfseries Despliegue y entornos & Un proceso \texttt{Bastion.Server.Host} y una instancia de SQL Server 2019 o posterior en la red del aula; cada jugador corre el cliente en macOS arm64 o en Windows. El servidor se configura con los secretos de usuario y \texttt{appsettings.json}; el cliente, con \texttt{BASTION\_\allowbreak SERVER\_\allowbreak HOST}, \texttt{BASTION\_\allowbreak SERVER\_\allowbreak PORT} y \texttt{BASTION\_\allowbreak SERVER\_\allowbreak THUMBPRINT}. Un solo entorno, el de desarrollo de cada integrante, sin nube; nunca \texttt{PublishTrimmed} ni \texttt{PublishAot}. & ADR-002, ADR-003, ADR-005 / ASR-03 & V-07; R-03, R-08\\\hline
   \small\bfseries Observabilidad y operación & Cliente y servidor registran con log4net en consola y en un archivo rotativo (\texttt{logs/\allowbreak server.log} y \texttt{logs/\allowbreak client.log}, 5 MB, 5 copias, nivel INFO), con mensajes que siguen el §11 del estándar; una excepción que termina el proceso se registra en Fatal. Los intentos de inicio de sesión quedan en \texttt{AccessLog}. No hay métricas ni trazas distribuidas: no aplican a un servidor único en el aula. & — / ASR-04 & R-05 (la latencia se medirá con el prototipo de carga)\\\hline
   \small\bfseries Costo operacional & No aplica en esta versión: el sistema corre en las máquinas del equipo y del aula, con software sin costo (.NET, MonoGame, CoreWCF, EF Core, log4net y una edición gratuita de SQL Server), sin nube ni servicios de pago. El único costo posible es el proveedor de correo y segundo factor, aún sin elegir. & ADR-003, ADR-005 / — & Q-03, R-07\\\hline
 \end{xltabular}
@@ -1292,6 +1292,68 @@ Las reglas van del núcleo hacia afuera.
 \end{tikzpicture}
 \end{landscape}
 
+\begin{ficha}{V-07 · Despliegue de Bastión}
+  \frow{Tipo de vista}{Despliegue}
+  \frow{Para quién y para qué}{Para el equipo y el profesor: ver en qué máquinas corre cada componente, qué configuración necesita cada una y por dónde se comunican. Sirve para instalar el sistema en el aula.}
+  \frow{Preocupaciones que atiende}{Los nodos y los artefactos de cada componente; la comunicación y sus puertos; los límites de confianza (cliente–servidor por TLS; servidor–base con un usuario que no puede borrar filas ni cambiar el esquema); la configuración que vive fuera del repositorio, y la redundancia, que no hay: un solo servidor (R-04).}
+  \frow{Notación y leyenda}{UML de despliegue. Cajas en 3D: nodos «device»; recuadros blancos: «execution environment»; rectángulos internos: artefactos, con su componente; líneas sólidas: rutas de comunicación con su protocolo; caja y línea punteadas: servicio externo planeado (C-08). Debajo de cada entorno va la configuración que necesita. En desarrollo, cada integrante corre el servidor, la base y uno o dos clientes en su propio equipo.}
+  \frow{Se corresponde con}{V-02: cada artefacto es un proyecto de V-02, y las dos rutas sólidas son sus flechas entre cliente, servidor y base; sección 5: la fila «Despliegue y entornos» describe estos nodos; R-03, R-04 y R-08.}
+\end{ficha}
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  nodeface/.style={draw=SADNavy, fill=SADHead},
+  nodeside/.style={draw=SADNavy, fill=SADHead!70!SADNavy!40},
+  env/.style={draw=SADNavy, fill=white},
+  artifact/.style={draw=SADGray, fill=SADNote, inner sep=2pt, anchor=north west, align=center},
+  external/.style={draw=SADGray, dashed, fill=black!5},
+  note/.style={draw=SADGray, fill=SADNote, align=left, inner sep=3pt, anchor=north west},
+  path/.style={draw=SADNavy, thick},
+  planned/.style={draw=SADGray, thick, dashed},
+  lbl/.style={fill=white, inner sep=1pt, align=center}]
+  \newcommand{\deploymentnode}[4]{%
+    \filldraw[nodeside] (#1+#3,#2) -- ++(0.25,0.25) -- ++(0,-#4) -- ++(-0.25,-0.25) -- cycle;
+    \filldraw[nodeside] (#1,#2) -- ++(0.25,0.25) -- ++(#3,0) -- ++(-0.25,-0.25) -- cycle;
+    \filldraw[nodeface] (#1,#2) rectangle ++(#3,-#4);}
+  \deploymentnode{0}{0}{6.0}{6.4}
+  \node[anchor=north, align=center] at (3.0,-0.08) {«device»\\\textbf{PC del jugador} (2 a 4 por partida)\\macOS arm64 o Windows};
+  \filldraw[env] (0.25,-1.15) rectangle (5.75,-4.85);
+  \node[anchor=north, align=center] at (3.0,-1.20) {«execution environment»\\\textbf{.NET 10} · MonoGame DesktopGL};
+  \node[artifact, text width=4.95cm] at (0.40,-1.95) {\textbf{Bastion.Client.exe} · C-01};
+  \node[artifact, text width=4.95cm] at (0.40,-2.53) {\textbf{Bastion.Client.Networking.dll} · C-09};
+  \node[artifact, text width=4.95cm] at (0.40,-3.11) {\textbf{Bastion.Domain.dll} · C-05};
+  \node[artifact, text width=4.95cm] at (0.40,-3.69) {\textbf{Bastion.Contracts.dll} · C-02};
+  \node[artifact, text width=4.95cm] at (0.40,-4.27) {modelos del tablero · ADR-009};
+  \node[anchor=north west, align=left, text width=5.5cm] at (0.25,-4.95) {Variables \texttt{BASTION\_SERVER\_HOST}, \texttt{\_PORT} y \texttt{\_THUMBPRINT}; \texttt{logs/client.log}; idioma en \texttt{Bastion/language.txt}};
+  \begin{scope}[xshift=-0.3cm]
+  \deploymentnode{9.0}{0}{7.0}{6.4}
+  \node[anchor=north, align=center] at (12.5,-0.08) {«device»\\\textbf{Equipo servidor}\\Windows o macOS, en la red del aula};
+  \filldraw[env] (9.25,-1.15) rectangle (15.75,-4.85);
+  \node[anchor=north, align=center] at (12.5,-1.20) {«execution environment»\\\textbf{.NET 10} · ASP.NET Core con CoreWCF};
+  \node[artifact, text width=5.95cm] at (9.40,-1.95) {\textbf{Bastion.Server.Host.exe} · C-03};
+  \node[artifact, text width=5.95cm] at (9.40,-2.53) {\textbf{Bastion.Server.Application.dll} · C-04};
+  \node[artifact, text width=5.95cm] at (9.40,-3.11) {\textbf{Bastion.Server.Adapters.dll} · C-06};
+  \node[artifact, text width=5.95cm] at (9.40,-3.69) {\textbf{Bastion.Domain.dll} · C-05};
+  \node[artifact, text width=5.95cm] at (9.40,-4.27) {\textbf{Bastion.Contracts.dll} · C-02};
+  \node[anchor=north west, align=left, text width=6.5cm] at (9.25,-4.95) {\texttt{appsettings.json} (\texttt{Server:NetTcpPort}) y \texttt{ServiceModel.config}; secretos de usuario: certificado \texttt{.pfx} y cadena de conexión \texttt{Bastion}; \texttt{logs/server.log}};
+  \deploymentnode{9.0}{-7.9}{7.0}{3.9}
+  \node[anchor=north, align=center] at (12.5,-7.98) {«device»\\\textbf{Servidor de base de datos}\\puede ser el equipo servidor};
+  \filldraw[env] (9.25,-9.05) rectangle (15.75,-10.80);
+  \node[anchor=north, align=center] at (12.5,-9.10) {«execution environment»\\\textbf{SQL Server 2019 o posterior}};
+  \node[artifact, text width=5.95cm] at (9.40,-9.85) {«database» \textbf{Bastion} · C-07\\esquema de \texttt{database/01} a \texttt{08}};
+  \node[anchor=north west, align=left, text width=6.5cm] at (9.25,-10.90) {Usuario \texttt{BastionServerConnection}: SELECT, INSERT, UPDATE y EXECUTE.};
+  \draw[path] (12.5,-6.4) -- (12.5,-7.9);
+  \node[lbl, anchor=west, align=left] at (12.62,-7.15) {«TDS», usuario\\\texttt{BastionServerConnection}};
+  \end{scope}
+  \filldraw[external] (0,-7.9) rectangle (6.0,-9.6);
+  \node[anchor=north, align=center] at (3.0,-8.0) {«external»\\\textbf{Servicio de correo y proveedor}\\\textbf{del segundo factor} (planeado, Q-03)};
+  \node[note, text width=5.6cm] at (0,-10.3) {Los scripts de \texttt{database/} los corre un integrante con una cuenta de administrador (\texttt{sqlcmd} o SSMS), no el servidor.};
+  \draw[path] (6.0,-2.8) -- (8.7,-2.8);
+  \node[lbl] at (7.35,-2.8) {«net.tcp + TLS»\\dúplex, puerto\\8000 por omisión};
+  \draw[planned] (8.7,-5.9) -| (7.35,-8.75) -- (6.0,-8.75);
+  \node[lbl] at (7.35,-7.3) {C-08\\(planeado)};
+\end{tikzpicture}
+\end{center}
+
 \newpage
 
 % =====================================================================
@@ -1309,7 +1371,7 @@ Las reglas van del núcleo hacia afuera.
   \endhead
   ASR-01 & ADR-001, ADR-008 & C-03, C-04, C-05 & V-06 & EV-01 & El servidor valida cada jugada con C-05 antes de guardarla (V-06, pasos 11 a 14). Las pruebas del núcleo rechazan la jugada fuera de turno, con el número adelantado, a una casilla inalcanzable, de alguien ajeno a la partida o con el reloj agotado. No se probó con un cliente modificado. & R-12, R-14\\\hline
   ASR-02 & ADR-001, ADR-002 & C-03, C-09 & V-05, V-06 & — & Sin medir. Cada aviso sale en una vía después de guardarse, pero no se ha comprobado el percentil 95 de 500 ms. & R-05\\\hline
-  ASR-03 & ADR-003, ADR-005, ADR-009 & C-01, C-07 & V-02 & — & Sin evidencia registrada. El equipo desarrolla en macOS arm64 y en Windows con el mismo código. & R-03\\\hline
+  ASR-03 & ADR-003, ADR-005, ADR-009 & C-01, C-07 & V-02, V-07 & — & Sin evidencia registrada. El equipo desarrolla en macOS arm64 y en Windows con el mismo código. & R-03\\\hline
   ASR-04 & ADR-001, ADR-007 & C-03, C-04, C-06 & V-01; tabla 4.2 & EV-01 & Ya están construidos el resumen PBKDF2, el token guardado como SHA-256, el bloqueo escalonado y la bitácora. Las pruebas cubren el bloqueo, el identificador desconocido y la sesión de 24 h. Falta el doble factor, y el bloqueo revela qué cuentas existen. & R-01, R-07, R-13, R-15\\\hline
   ASR-05 & ADR-001, ADR-005, ADR-008 & C-04, C-06, C-07 & V-05, V-06 & EV-01 & Cada jugada y cada cierre se guardan en una sola escritura; \texttt{PK\_Move} y \texttt{UX\_Participation\_\allowbreak Unfinished} impiden duplicados, y \texttt{MatchGate} ordena las operaciones de cada partida. No se probó contra la base real. & R-04, R-11\\\hline
   ASR-06 & ADR-008 & C-04, C-05, C-06 & V-03 & EV-01, EV-02 & 684 pruebas del núcleo corren sin base ni red. Se cumplen 8 de las 9 reglas de dependencia; la 5 falla en C-03. & R-07, R-11, R-12\\\hline
