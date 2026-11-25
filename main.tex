@@ -154,7 +154,7 @@
   v0.4 & 16/10/2026 & V-02 pasa a ser la vista de contenedores y paquetes de la solución nueva; se agrega C-09 (\texttt{Bastion.Client.Networking}), el cliente referencia a C-09 y C-05, y C-06 implementa también los puertos de contraseña y token; el núcleo hexagonal queda solo en C-04 y C-05 pasa a ser biblioteca compartida (ADR-008); V-01, reglas de dependencia, glosario y resumen ajustados; se agregan V-03 y V-04 con los componentes UML del servidor y del cliente ya construidos.\\\hline
   v0.5 & 25/10/2026 & Portada actualizada a la versión vigente; el glosario se parte entre páginas para que no se pierdan términos.\\\hline
   v0.6 & 27/10/2026 & Escenarios de calidad revisados contra el libro: cada QAS indica su sub-atributo (ISO 25010, Fig. 14.1) y tiene un nombre descriptivo con interesado, intención y la respuesta del escenario general; se ajustan Fuente, Entorno (primero el tipo de entorno), Artefacto, Respuesta y Medida (solo la meta, en porcentaje y sin mezclar atributos), y las filas de seguridad de QAS-01 y QAS-02; QAS-09 pasa a (M, M) y QAS-11 a (A, B). El árbol de utilidad tiene una fila por atributo y refinamientos por sub-atributo. ASR-01 suma los objetivos de negocio, ASR-02 se expresa en percentil 95 y ASR-06 suma CRN-26. Las ADR se priorizan: seis prioritarias, y ADR-003 y ADR-004 quedan como complementarias (3.3). Se quitan las referencias de tiempo fuera de los escenarios de desempeño.\\\hline
-  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). Vistas de ejecución V-05, V-06 y V-08. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo. ADR-009 registra la presentación del tablero en 3D, y V-07 muestra el despliegue. Se completan la arquitectura en ejecución (5), la trazabilidad de los ASR (7.1), las evidencias EV-01 (pruebas del núcleo) y EV-02 (script de reglas de dependencia en \texttt{evidencia/}) y la transición a construcción (7.4).\\\hline
+  v0.7 & 25/11/2026 & Estructura revisada contra el código: tabla de componentes C-01 a C-09, cinco interfaces críticas con su contrato y nueve reglas de dependencia (4.1 a 4.3). V-02 se redibuja con dos contenedores, cliente y servidor, y los paquetes actuales. Vistas de ejecución V-05, V-06 y V-08. Riesgos R-01 a R-10 al día (R-02, R-06 y R-10 cerrados) y nuevos R-11 a R-15. ADR-003, ADR-005 y ADR-008, el glosario, las restricciones y el resumen se alinean con el código: tablero 3D con Gum, SQL Server 2019 o posterior y los puertos reales del núcleo. ADR-009 registra la presentación del tablero en 3D, y V-07 muestra el despliegue. Se completan la arquitectura en ejecución (5), la trazabilidad de los ASR (7.1), las evidencias EV-01 (pruebas del núcleo) y EV-02 (script de reglas de dependencia en \texttt{evidencia/}) y la transición a construcción (7.4).\\\hline
 \end{xltabular}
 
 \subsection{Resumen de la arquitectura}
@@ -728,79 +728,61 @@ Las reglas van del núcleo hacia afuera.
 \begin{ficha}{V-02 · Contenedores y paquetes}
   \frow{Tipo de vista}{Estructura}
   \frow{Para quién y para qué}{Para el equipo: ver qué corre en cada proceso, en qué proyecto y paquete va cada clase y qué referencias están permitidas; para el profesor: comprobar que la estructura sigue ADR-001 y ADR-008.}
-  \frow{Preocupaciones que atiende}{Procesos y bibliotecas compartidas, proyectos y paquetes, dependencias permitidas, frontera de red, límite de confianza y quién accede a la base de datos.}
-  \frow{Notación y leyenda}{C4 nivel 2 (contenedores) con los proyectos de \texttt{Bastion.slnx} dentro de cada contenedor y, en letra monoespaciada, sus paquetes. Franjas: el proceso del cliente, las bibliotecas que compilan cliente y servidor, y el proceso del servidor; borde punteado de la franja del cliente: límite de confianza; hexágono: núcleo del servidor (C-04); recuadros grises: la base de datos y los sistemas externos; recuadro discontinuo: paquete planeado; flecha continua: referencia entre proyectos; flecha discontinua: comunicación en ejecución, por red o por la conexión a la base con el usuario \texttt{BastionServerConnection}.}
-  \frow{Se corresponde con}{V-01: las tres franjas y la base forman el recuadro de Bastión, y C-08 es la única salida hacia el correo y el segundo factor; la tabla 4.1: cada recuadro con identificador es una fila; la tabla 4.3: cada flecha continua es una referencia permitida, y todas las que tocan C-04 o C-05 apuntan hacia ellos; los \texttt{.csproj}: cada flecha continua es un \texttt{ProjectReference}.}
+  \frow{Preocupaciones que atiende}{Los dos procesos, cliente y servidor; qué proyectos y paquetes lleva cada uno; dependencias permitidas; frontera de red; límite de confianza, y quién accede a la base de datos.}
+  \frow{Notación y leyenda}{C4 nivel 2 con dos contenedores: el cliente, uno por jugador, y el servidor con su base de datos. Dentro de cada uno van los proyectos de \texttt{Bastion.slnx} y, en letra monoespaciada, sus paquetes. C-02 y C-05 se compilan en los dos procesos, por eso aparecen en ambos con fondo blanco. Borde punteado de la franja del cliente: límite de confianza; borde azul grueso: núcleo del servidor (C-04); cilindro: la base de datos; recuadros grises fuera de Bastión: sistemas externos; recuadro discontinuo: paquete planeado; flecha continua: referencia entre proyectos; flecha discontinua: comunicación en ejecución, por red o por la conexión TDS con el usuario \texttt{BastionServerConnection}.}
+  \frow{Se corresponde con}{V-01: las dos franjas forman el recuadro de Bastión, y C-08 es la única salida hacia el correo y el segundo factor; V-07: la franja del cliente es el PC del jugador, y la del servidor, el equipo servidor y el servidor de base de datos; la tabla 4.1: cada recuadro con identificador es una fila; la tabla 4.3 y los \texttt{.csproj}: cada flecha continua es un \texttt{ProjectReference} permitido, y las que tocan C-04 o C-05 apuntan hacia ellos.}
 \end{ficha}
-\begin{center}
-\begin{tikzpicture}[x=1bp,y=1bp,txt/.style={anchor=base west,inner sep=0pt}]
-  \fill[black!3] (80.85,273.88) rectangle (208.40,414.19);
-  \draw[very thick, densely dotted, SADGray] (80.85,273.88) rectangle (208.40,414.19);
-  \fill[black!3] (239.59,208.68) rectangle (367.14,414.19);
-  \fill[black!3] (398.33,99.55) rectangle (537.22,414.19);
-  \node[txt, font=\scriptsize, text=SADNavy] at (84.12,405.39) {\textbf{Cliente de escritorio}};
-  \node[txt, font=\scriptsize, text=SADNavy] at (242.86,405.39) {\textbf{Bibliotecas compartidas}};
-  \node[txt, font=\scriptsize, text=SADNavy] at (401.60,405.39) {\textbf{Servidor de partidas}};
-  \filldraw[draw=SADNavy, fill=SADHead] (91.95,351.89) rectangle (197.30,397.13);
-  \node[txt, font=\footnotesize] at (104.46,387.83) {\textbf{C-01 Bastion.Client}};
-  \node[txt, font=\footnotesize] at (108.31,376.88) {MonoGame y Gum};
-  \node[txt, font=\scriptsize] at (107.68,365.92) {\texttt{Screens · Controls}};
-  \node[txt, font=\scriptsize] at (103.45,354.96) {\texttt{Localization · Theme}};
-  \filldraw[draw=SADNavy, fill=SADHead] (91.95,288.05) rectangle (197.30,330.57);
-  \node[txt, font=\footnotesize] at (96.65,317.16) {\textbf{C-09 Client.Networking}};
-  \node[txt, font=\footnotesize] at (114.73,306.20) {proxies remotos};
-  \node[txt, font=\scriptsize] at (105.56,295.24) {\texttt{Accounts · Channels}};
-  \filldraw[draw=SADNavy, fill=SADHead] (250.69,288.05) rectangle (356.04,330.57);
-  \node[txt, font=\footnotesize] at (255.39,317.16) {\textbf{C-02 Bastion.Contracts}};
-  \node[txt, font=\footnotesize] at (274.94,306.20) {netstandard2.0};
-  \node[txt, font=\scriptsize] at (286.43,295.24) {\texttt{Accounts}};
-  \filldraw[draw=SADNavy, fill=SADHead] (250.69,218.66) rectangle (356.04,263.90);
-  \node[txt, font=\footnotesize] at (259.33,254.61) {\textbf{C-05 Bastion.Domain}};
-  \node[txt, font=\footnotesize] at (257.46,243.65) {reglas, sin dependencias};
-  \node[txt, font=\scriptsize] at (264.30,232.69) {\texttt{Accounts · Auditing}};
-  \node[txt, font=\scriptsize] at (286.43,221.73) {\texttt{Sessions}};
-  \filldraw[draw=SADNavy, fill=SADHead] (412.26,353.25) rectangle (517.62,395.77);
-  \node[txt, font=\footnotesize] at (429.68,382.36) {\textbf{C-03 Server.Host}};
-  \node[txt, font=\footnotesize] at (417.67,371.40) {CoreWCF y composición};
-  \node[txt, font=\scriptsize] at (430.11,360.44) {\texttt{Accounts · Common}};
-  \filldraw[draw=SADBlue, fill=SADHead, very thick] (401.16,241.28) -- (418.17,276.71) -- (511.71,276.71) -- (528.72,241.28) -- (511.71,205.85) -- (418.17,205.85) -- cycle;
-  \node[txt, font=\footnotesize] at (416.31,259.34) {\textbf{C-04 Server.Application}};
-  \node[txt, font=\footnotesize] at (421.58,248.38) {casos de uso y puertos};
-  \node[txt, font=\scriptsize] at (425.88,237.42) {\texttt{Accounts · Auditing}};
-  \node[txt, font=\scriptsize] at (425.88,227.96) {\texttt{Sessions · Security}};
-  \node[txt, font=\scriptsize] at (452.24,217.00) {\texttt{Common}};
-  \filldraw[draw=SADNavy, fill=SADHead] (411.08,105.22) rectangle (518.80,191.67);
-  \node[txt, font=\footnotesize] at (415.63,182.18) {\textbf{Bastion.Server.Adapters}};
-  \filldraw[draw=SADNavy, fill=white, dashed] (416.18,152.20) rectangle (513.70,171.62);
-  \node[txt, font=\scriptsize] at (435.95,163.65) {\textbf{C-08} (planeado)};
-  \node[txt, font=\scriptsize] at (424.01,154.19) {\texttt{Email · SecondFactor}};
-  \filldraw[draw=SADNavy, fill=white] (416.18,116.10) rectangle (513.70,136.86);
-  \node[txt, font=\scriptsize] at (419.64,129.33) {\textbf{C-06} EF Core y PBKDF2};
-  \node[txt, font=\scriptsize] at (419.78,119.86) {\texttt{Persistence · Security}};
-  \filldraw[draw=SADGray, fill=black!8] (251.40,171.83) rectangle (355.33,194.51);
-  \node[txt, font=\footnotesize] at (269.29,180.06) {Servicio de correo};
-  \filldraw[draw=SADGray, fill=black!8] (251.40,144.90) rectangle (355.33,167.58);
-  \node[txt, font=\footnotesize] at (257.46,153.13) {Proveedor del 2.º factor};
-  \filldraw[draw=SADGray, fill=black!8] (245.99,96.86) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp] -- (360.74,128.23) arc[start angle=0, end angle=180, x radius=57.37bp, y radius=8.62bp] -- cycle (245.99,128.23) arc[start angle=180, end angle=360, x radius=57.37bp, y radius=8.62bp];
-  \node[txt, font=\footnotesize] at (263.03,109.85) {\textbf{C-07 Base de datos}};
-  \node[txt, font=\footnotesize] at (249.62,98.89) {SQL Server 2019 o posterior};
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (144.62,351.69) -- (144.62,330.77);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (91.75,374.51) -- (75.18,374.51) -- (75.18,241.28) -- (250.49,241.28);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (194.23,300.81) -- (253.76,300.81);
-  \node[txt, font=\scriptsize, text=SADNavy] at (211.26,293.38) {privada};
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (412.06,374.51) -- (356.24,330.77);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (464.94,353.05) -- (464.94,276.71);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (517.82,374.51) -- (532.97,374.51) -- (532.97,181.75) -- (518.80,181.75);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (464.94,191.67) -- (464.94,205.85);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (411.08,188.84) -- (356.24,218.46);
-  \draw[-{Stealth[length=2mm]}, thick, SADNavy] (401.16,241.28) -- (356.24,241.28);
-  \draw[-{Stealth[length=2mm]}, thick, dashed, SADBlue] (194.23,320.65) -- (223.99,320.65) -- (223.99,422.70) -- (507.46,422.70) -- (507.46,395.97);
-  \node[txt, inner ysep=1.5bp, font=\scriptsize, text=SADBlue] at (276.88,426.58) {dúplex net.tcp con TLS (SecurityMode.Transport)};
-  \draw[-{Stealth[length=2mm]}, thick, dashed, SADBlue] (415.98,161.91) -- (355.53,183.17);
-  \draw[-{Stealth[length=2mm]}, thick, dashed, SADBlue] (415.98,161.91) -- (355.53,156.24);
-  \draw[-{Stealth[length=2mm]}, thick, dashed, SADBlue] (415.98,126.48) -- (360.91,106.92);
+\begin{landscape}
+\centering
+{\footnotesize\textbf{V-02:} el cliente y el servidor, con sus proyectos y paquetes.}\par\smallskip
+\begin{tikzpicture}[font=\scriptsize,
+  box/.style={draw=SADNavy, fill=SADHead, align=center, inner sep=4pt, anchor=north},
+  copy/.style={draw=SADNavy, fill=white, align=center, inner sep=4pt, anchor=north},
+  planned/.style={draw=SADNavy, fill=white, dashed, align=center, inner sep=3pt, anchor=north},
+  ext/.style={draw=SADGray, fill=black!8, align=center, inner sep=4pt, text width=3.0cm, anchor=north west},
+  ref/.style={-{Stealth[length=2mm]}, thick, SADNavy},
+  run/.style={-{Stealth[length=2mm]}, thick, dashed, SADBlue},
+  lbl/.style={inner sep=1pt, align=center},
+  band/.style={font=\footnotesize, text=SADNavy, anchor=north west, align=left}]
+  \draw[SADGray, dashed, rounded corners=6pt] (0,0) rectangle (19.2,-13.2);
+  \node[anchor=north west, font=\footnotesize\bfseries, text=SADGray] at (0.15,-0.1) {Bastión [sistema]};
+  \fill[black!3] (0.3,-0.6) rectangle (7.0,-12.9);
+  \draw[very thick, densely dotted, SADGray] (0.3,-0.6) rectangle (7.0,-12.9);
+  \node[band] at (0.45,-0.7) {\textbf{Cliente} · un proceso por jugador};
+  \fill[black!3] (8.6,-0.6) rectangle (18.9,-12.9);
+  \node[band] at (8.75,-0.7) {\textbf{Servidor} · un proceso y su base de datos};
+  \node[box, text width=5.6cm] (c01) at (3.75,-1.4) {{\footnotesize\textbf{C-01 Bastion.Client}}\\ejecutable · MonoGame DesktopGL y Gum\\[2pt]\texttt{Screens · Controls · Theme}\\\texttt{Localization · Platform}};
+  \node[box, text width=5.6cm] (c09) at ([yshift=-0.8cm]c01.south) {{\footnotesize\textbf{C-09 Bastion.Client.Networking}}\\proxies remotos de CoreWCF\\[2pt]\texttt{Accounts · Sessions · Channels}\\\texttt{Notifications · Matches}\\\texttt{Matchmaking · Rooms · Chat}\\\texttt{PrivateChat · Friends}};
+  \node[copy, text width=5.6cm] (c02c) at ([yshift=-0.8cm]c09.south) {{\footnotesize\textbf{C-02 Bastion.Contracts}}\\netstandard2.0 · contratos de red\\[2pt]\texttt{Accounts · Sessions · Matches}\\\texttt{Matchmaking · Rooms · Chat}\\\texttt{PrivateChat · Friends}\\\texttt{Notifications}};
+  \node[copy, text width=5.6cm] (c05c) at ([yshift=-0.8cm]c02c.south) {{\footnotesize\textbf{C-05 Bastion.Domain}}\\reglas del juego, sin dependencias\\[2pt]\texttt{Accounts · Sessions · Matches}\\\texttt{Matchmaking · Rooms · GameModes}\\\texttt{Chat · Friends · Moderation · Text}\\\texttt{Statistics · Auditing · Common}};
+  \node[copy, text width=5.0cm] (c02s) at (11.55,-1.4) {{\footnotesize\textbf{C-02 Bastion.Contracts}}\\netstandard2.0 · contratos de red\\[2pt]\texttt{Accounts · Sessions · Matches}\\\texttt{Matchmaking · Rooms · Chat}\\\texttt{PrivateChat · Friends}\\\texttt{Notifications}};
+  \node[box, text width=5.0cm] (c03) at ([yshift=-0.8cm]c02s.south) {{\footnotesize\textbf{C-03 Bastion.Server.Host}}\\ejecutable · CoreWCF y composición\\[2pt]\texttt{Accounts · Sessions · Matches}\\\texttt{Matchmaking · Rooms · Chat}\\\texttt{PrivateChat · Friends · Common}};
+  \node[box, text width=5.0cm, draw=SADBlue, very thick] (c04) at ([yshift=-0.8cm]c03.south) {{\footnotesize\textbf{C-04 Bastion.Server.Application}}\\núcleo: casos de uso y puertos\\[2pt]\texttt{Accounts · Sessions · Security}\\\texttt{Matches · Matchmaking · Rooms}\\\texttt{Chat · PrivateChat · Friends}\\\texttt{Moderation · Auditing · Common}};
+  \node[copy, text width=5.0cm] (c05s) at ([yshift=-0.8cm]c04.south) {{\footnotesize\textbf{C-05 Bastion.Domain}}\\reglas del juego, sin dependencias\\[2pt]\texttt{Accounts · Sessions · Matches}\\\texttt{Matchmaking · Rooms · GameModes}\\\texttt{Chat · Friends · Moderation · Text}\\\texttt{Statistics · Auditing · Common}};
+  \node[draw=SADNavy, fill=SADHead, anchor=north, minimum width=4.2cm, minimum height=3.6cm] (adp) at (16.6,-6.2) {};
+  \node[anchor=north, align=center] at (adp.north) {\footnotesize\textbf{Bastion.Server.Adapters}};
+  \node[planned, text width=3.6cm] (c08) at ([yshift=-0.55cm]adp.north) {\textbf{C-08} (planeado)\\\texttt{Email · SecondFactor}};
+  \node[copy, text width=3.6cm] (c06) at ([yshift=-0.35cm]c08.south) {\textbf{C-06} EF Core y PBKDF2\\[2pt]\texttt{Persistence · Security}\\\texttt{Matchmaking · Rooms}};
+  \filldraw[draw=SADGray, fill=black!8] (15.3,-10.9) arc[start angle=180, end angle=360, x radius=1.6cm, y radius=0.3cm] -- (18.5,-12.3) arc[start angle=0, end angle=-180, x radius=1.6cm, y radius=0.3cm] -- cycle;
+  \draw[SADGray] (15.3,-10.9) arc[start angle=180, end angle=0, x radius=1.6cm, y radius=0.3cm];
+  \node[align=center] (c07) at (16.9,-11.65) {{\footnotesize\textbf{C-07 Base de datos}}\\SQL Server 2019 o posterior};
+  \node[ext] (mail) at (19.7,-6.3) {Servicio de correo\\externo};
+  \node[ext] (tfa) at (19.7,-7.8) {Proveedor del\\segundo factor};
+  \draw[ref] (c01.south) -- (c09.north);
+  \draw[ref] (c09.south) -- node[lbl, right=2pt, text=SADNavy] {privada} (c02c.north);
+  \draw[ref] (c01.west) -- ++(-0.3,0) |- (c05c.west);
+  \draw[ref] (c03.north) -- (c02s.south);
+  \draw[ref] (c03.south) -- (c04.north);
+  \draw[ref] (c04.south) -- (c05s.north);
+  \draw[ref] (c03.east) -| ([xshift=-1.2cm]adp.north);
+  \draw[ref] (adp.west |- c04.east) -- (c04.east);
+  \draw[ref] ([xshift=0.25cm]adp.south west) |- (c05s.east);
+  \draw[run] (c09.east |- c03.west) -- node[lbl, above=1pt, text=SADBlue] {net.tcp\\+ TLS} node[lbl, below=1pt, text=SADBlue] {dúplex} (c03.west);
+  \draw[run] (16.9,-9.8) -- node[lbl, right=2pt, text=SADBlue] {TDS} (16.9,-10.6);
+  \draw[run] (c08.east) -- ++(0.45,0) |- (mail.west);
+  \draw[run] (c08.east) -- ++(0.45,0) |- (tfa.west);
 \end{tikzpicture}
-\end{center}
+\end{landscape}
 
 \begin{ficha}{V-03 · Componentes del servidor}
   \frow{Tipo de vista}{Estructura}
