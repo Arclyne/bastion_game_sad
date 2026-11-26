@@ -1,0 +1,20 @@
+EV-01 · Pruebas del núcleo de Bastión sin base de datos ni red
+Fecha: 25/11/2026
+Código: Arclyne/bastion, commit 63beca6 (PR #41)
+Entorno: Windows 11, .NET SDK 10.0.400
+
+Comandos, desde la raíz de Arclyne/bastion:
+  dotnet test tests/Bastion.Domain.Tests/Bastion.Domain.Tests.csproj
+  dotnet test tests/Bastion.Server.Application.Tests/Bastion.Server.Application.Tests.csproj
+
+Salida de cada comando:
+  Passed!  - Failed:     0, Passed:   320, Skipped:     0, Total:   320, Duration: 311 ms - Bastion.Domain.Tests.dll (net10.0)
+  Passed!  - Failed:     0, Passed:   364, Skipped:     0, Total:   364, Duration: 554 ms - Bastion.Server.Application.Tests.dll (net10.0)
+
+Tiempo total de cada comando, con la compilación incremental: 4,7 s y 5,7 s.
+
+Condiciones: las dos suites solo referencian al proyecto que prueban (Bastion.Domain y
+Bastion.Server.Application), sus únicos paquetes son xunit.v3, xunit.runner.visualstudio y
+Microsoft.NET.Test.Sdk, y cada puerto se sustituye con un doble escrito a mano. No leen
+configuración, así que no tienen cadena de conexión ni dirección del servidor. SQL Server
+estaba encendido en la máquina, pero ninguna prueba tiene cómo conectarse a él.
